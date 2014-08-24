@@ -1,6 +1,14 @@
 from weapons import *
 from armor import *
 from random import randint
+from tkinter import Frame,Label
+
+class Text(Label):
+  def __init__(self,master,text):
+    Label.__init__(self, master)
+    self.mText = text
+  def __str__(self):
+    return self.mText
 
 class Title:
   def __init__(self,title=None,after=False):
@@ -10,6 +18,21 @@ class Title:
     if self.mAfter:
       return name + ', ' + self.mTitle
     return self.mTitle + ' ' + name
+
+class FullName(Label):
+  def __init__(self,character,name,titles):
+    Label.__init__(self,character)
+    self.mName = name
+    self.mInactiveTitles = titles
+    if len(titles):
+      self.mActiveTitle = titles[0]
+    else:
+      self.mActiveTitle = None
+    self.config(text=str(self))
+  def __str__(self):
+    if self.mActiveTitle:
+      return self.mActiveTitle.addTitle(self.mName)
+    return self.mName
 
 class Alignment:
   def __init__(self):
@@ -23,13 +46,12 @@ class Class:
     self.mName = None
     self.mLevel = None
 
-class Character:
-  def __init__(self,name=None,titles=[],height=None,weight=None,looks=None, \
+class Character(Frame):
+  def __init__(self,master,name=None,titles=[],height=None,weight=None,looks=None, \
              race=None,gender=None,size=None,cls=Class(),alignment=Alignment()):
+    Frame.__init__(self, master)
     # Character Info
-    self.mName = name
-    self.mTitles = titles
-    self.mActiveTitle = None
+    self.mName = FullName(self,name,titles)
     self.mHeight = height
     self.mWeight = weight
     self.mLooks = looks

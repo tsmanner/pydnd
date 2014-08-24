@@ -1,6 +1,6 @@
 from tkinter import Tk,Frame,Label,Button
 from weapons import MasterworkScimitar
-from characterbase import Character
+from characterbase import Character,Title
 from random import randint
 
 class dndgui(Tk):
@@ -9,8 +9,6 @@ class dndgui(Tk):
     self.title('D&D GUI')
     self.pack_propagate(0)
     self.config(height=500,width=500)
-    self.mFrame = Frame(self)
-    self.mFrame.place(x=0,y=0)
     self.mButton = Button(self,height=2,width=16,text='Run',command=self.Run)
     self.mButton.place(x=0,y=0)
     self.mHit = Label(self,text='-----------',width=11)
@@ -20,9 +18,10 @@ class dndgui(Tk):
     self.mAC = Label(self,text='---',width=3)
     self.mAC.place(x=100,y=50)
 
-    self.mChar = Character()
+    self.mChar = Character(self,name='Baship',titles=[Title('Eldricht Knight')])
     self.mChar.mActiveWeapon = MasterworkScimitar()
   def Run(self):
+    print(self.mChar.mName)
     ac = randint(5,25)
     self.mAC.config(text=str(ac))
     hit = self.mChar.calcHit(3,ac)
@@ -37,3 +36,4 @@ class dndgui(Tk):
 if __name__ == '__main__':
   root = dndgui()
   root.mainloop()
+#  print(self.winfo_height(),self.winfo_width())
