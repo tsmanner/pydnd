@@ -1,14 +1,28 @@
 from tkinter import Tk,Frame,Label,Button
 from weapons import MasterworkScimitar
-from characterbase import Character,Title
+from character import Character
+from types import Title
+from races import StrongheartHalfling
 from random import randint
 
 class dndgui(Tk):
   def __init__(self):
+    # Initial setup of master window(self)
     Tk.__init__(self)
     self.title('D&D GUI')
     self.pack_propagate(0)
     self.config(height=500,width=500)
+    # Setup Character data
+    self.mChar = Character(self,\
+                 name='Baship',\
+                 titles=[Title('Eldricht Knight'),Title('Keeper of the Jars',True)],\
+                 height=37, weight=45,\
+                 looks=Text('Ruggedly Handsome'),\
+                 race=StrongheartHalfling())
+    self.mChar.mActiveWeapon = MasterworkScimitar()
+    # Setup and place GUI elements
+    self.place()
+  def place(self):
     self.mButton = Button(self,height=2,width=16,text='Run',command=self.Run)
     self.mButton.place(x=0,y=0)
     self.mHit = Label(self,text='-----------',width=11)
@@ -18,8 +32,6 @@ class dndgui(Tk):
     self.mAC = Label(self,text='---',width=3)
     self.mAC.place(x=100,y=50)
 
-    self.mChar = Character(self,name='Baship',titles=[Title('Eldricht Knight')])
-    self.mChar.mActiveWeapon = MasterworkScimitar()
   def Run(self):
     print(self.mChar.mName)
     ac = randint(5,25)

@@ -1,4 +1,4 @@
-from weaponbase import *
+from weaponbase import Slasher,Bludgeon,Piercer
 
 class MasterworkScimitar(Slasher):
   def __init__(self,notes=None):

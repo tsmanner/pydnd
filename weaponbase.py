@@ -1,4 +1,4 @@
-from dndlib import Item
+from types import Item
 from random import randint
 
 SLASH = 0
