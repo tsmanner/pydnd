@@ -1,10 +1,13 @@
 from random import randint
 from tkinter import Frame,Label
+from dndtypes import Class,Alignment,FullName
+from weapons import Unarmed
 
 class Character(Frame):
   def __init__(self,master,name=None,titles=[],height=None,weight=None,looks=None, \
              race=None,gender=None,size=None,cls=Class(),alignment=Alignment()):
-    Frame.__init__(self, master)
+    # Tkinter setup
+    Frame.__init__(self, master, height=20, width=50)
     # Character Info
     self.mName = FullName(self,name,titles)
     self.mHeight = height
@@ -23,6 +26,8 @@ class Character(Frame):
     # Saving Throws
     # Armor Class
     # Spells
+  def placeElements(self):
+    self.mName.place(x=0,y=0)
   def getName(self):
     if self.mActiveTitle:
       return self.mActiveTitle.addTitle(self.mName)

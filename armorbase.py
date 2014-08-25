@@ -1,4 +1,4 @@
-from types import Item
+from dndtypes import Item
 
 class Armor(Item):
   def __init__(self):

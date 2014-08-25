@@ -1,39 +1,53 @@
-from tkinter import Tk,Frame,Label,Button
+from tkinter import Tk,Frame,Label,Canvas
 from weapons import MasterworkScimitar
 from character import Character
-from types import Title
+from dndtypes import Title,Text
 from races import StrongheartHalfling
 from random import randint
 
-class dndgui(Tk):
-  def __init__(self):
+class dndgui(Frame):
+  def __init__(self,master):
     # Initial setup of master window(self)
-    Tk.__init__(self)
-    self.title('D&D GUI')
-    self.pack_propagate(0)
-    self.config(height=500,width=500)
+    Frame.__init__(self,master)
+    master.title('D&D GUI')
+#    self.pack_propagate(0)
+#    self.config(height=500,width=500)
     # Setup Character data
     self.mChar = Character(self,\
                  name='Baship',\
                  titles=[Title('Eldricht Knight'),Title('Keeper of the Jars',True)],\
                  height=37, weight=45,\
-                 looks=Text('Ruggedly Handsome'),\
-                 race=StrongheartHalfling())
+                 looks=Text(self,'Ruggedly Handsome'),\
+                 race=StrongheartHalfling(self))
     self.mChar.mActiveWeapon = MasterworkScimitar()
     # Setup and place GUI elements
-    self.place()
-  def place(self):
-    self.mButton = Button(self,height=2,width=16,text='Run',command=self.Run)
-    self.mButton.place(x=0,y=0)
+    self.placeElements()
+  def placeElements(self):
+    # Seed the x/y
+    x = 0
+    y = 0
+    '''
+    # h is the height and w is the width of the next thing being placed
+    h = 50
+    w = 100
+    self.mButton = Canvas(self,height=h-4,width=w-4,bg='tan')
+    self.mButton.bind("<Button-1>",self.Run)
+    self.mButton.place(x=x,y=y)
+    # Update x/y
+    x += w
+    y += h
+    '''
+    self.mChar.place(x=x,y=y)
+    '''
     self.mHit = Label(self,text='-----------',width=11)
-    self.mHit.place(x=0,y=50)
+    self.mHit.place(x=0,y=100)
     self.mDamage = Label(self,text='---',width=3)
-    self.mDamage.place(x=80,y=50)
+    self.mDamage.place(x=80,y=100)
     self.mAC = Label(self,text='---',width=3)
-    self.mAC.place(x=100,y=50)
+    self.mAC.place(x=100,y=100)
+    '''
 
-  def Run(self):
-    print(self.mChar.mName)
+  def Run(self,event=None):
     ac = randint(5,25)
     self.mAC.config(text=str(ac))
     hit = self.mChar.calcHit(3,ac)
@@ -46,6 +60,8 @@ class dndgui(Tk):
       self.mDamage.config(text='0')
 
 if __name__ == '__main__':
-  root = dndgui()
+  root = Tk()
+  gui = dndgui(root)
+  gui.config(height=500,width=500)
+  gui.pack()
   root.mainloop()
-#  print(self.winfo_height(),self.winfo_width())
