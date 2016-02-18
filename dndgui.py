@@ -1,67 +1,106 @@
-from tkinter import Tk,Frame,Label,Canvas
-from weapons import MasterworkScimitar
-from character import Character
-from dndtypes import Title,Text
-from races import StrongheartHalfling
-from random import randint
+import character
+import classes
+import collections
+import dndtypes
+import os
+import races
+import sqlite3 as sql
+import tkinter as tk
+import weapons
 
-class dndgui(Frame):
-  def __init__(self,master):
-    # Initial setup of master window(self)
-    Frame.__init__(self,master)
-    master.title('D&D GUI')
-#    self.pack_propagate(0)
-#    self.config(height=500,width=500)
-    # Setup Character data
-    self.mChar = Character(self,\
-                 name='Baship',\
-                 titles=[Title('Eldricht Knight'),Title('Keeper of the Jars',True)],\
-                 height=37, weight=45,\
-                 looks=Text(self,'Ruggedly Handsome'),\
-                 race=StrongheartHalfling(self))
-    self.mChar.mActiveWeapon = MasterworkScimitar()
-    # Setup and place GUI elements
-    self.placeElements()
-  def placeElements(self):
-    # Seed the x/y
-    x = 0
-    y = 0
-    '''
-    # h is the height and w is the width of the next thing being placed
-    h = 50
-    w = 100
-    self.mButton = Canvas(self,height=h-4,width=w-4,bg='tan')
-    self.mButton.bind("<Button-1>",self.Run)
-    self.mButton.place(x=x,y=y)
-    # Update x/y
-    x += w
-    y += h
-    '''
-    self.mChar.place(x=x,y=y)
-    '''
-    self.mHit = Label(self,text='-----------',width=11)
-    self.mHit.place(x=0,y=100)
-    self.mDamage = Label(self,text='---',width=3)
-    self.mDamage.place(x=80,y=100)
-    self.mAC = Label(self,text='---',width=3)
-    self.mAC.place(x=100,y=100)
-    '''
 
-  def Run(self,event=None):
-    ac = randint(5,25)
-    self.mAC.config(text=str(ac))
-    hit = self.mChar.calcHit(3,ac)
-    crit = hit[0]=='Crit'
-    hitStr = ','.join([str(s) for s in hit])
-    self.mHit.config(text=hitStr)
-    if hit[0] != 'Miss':
-      self.mDamage.config(text=str(self.mChar.mActiveWeapon.calcDamage(crit)))
-    else:
-      self.mDamage.config(text='0')
+class DndGui(tk.Frame):
+    def __init__(self, master):
+        # Initial setup of master window(self)
+        tk.Frame.__init__(self, master)
+        master.title('D&D GUI')
+        self.db = 'dnd.db'
+        self.init_db()
+        # Setup Character data
+        self.char = character.Character(name='Baship',
+                                        titles='Eldricht Knight|Keeper of the Jars',
+                                        height=37,
+                                        weight=45,
+                                        looks="Ruggedly Handsome",
+                                        race="Strongheart Halfling",
+                                        gender=character.MALE,
+                                        character_class="Druid",
+                                        class_level=1,
+                                        alignment="Neutral Good",
+                                        hit_point_max=90,
+                                        initiative=2,
+                                        speed=25,
+                                        armor_class=4,
+                                        attack_bonus=3)
+        self.char.inventory.append(weapons.MasterworkScimitar())
+        self.char.name.select_title(1)
+        self.char.equip(weapons.MasterworkScimitar())
+        self.save()
+
+        self.priority_button = tk.Button(self, text="Calculate Priority", command=self.calc_priority)
+        self.priority_button.pack(side=tk.TOP)
+        self.turn_order_list = tk.Listbox(self, font="courier 9", height=10, width=50)
+        self.turn_order_list.pack(side=tk.TOP)
+        self.load()
+
+    def calc_priority(self, event=None):
+        priority_map = collections.defaultdict(list)
+        for char in character.characters.values():
+            priority_map[char.roll_initiative()].append(char)
+        self.turn_order_list.delete(0, tk.END)
+        [[self.turn_order_list.insert(tk.END, char) for char in priority_map[priority]]
+         for priority in priority_map]
+
+    def attack(self, event=None):
+        print(self.char.attack(self.enemy))
+
+    def load(self):
+        with sql.connect(self.db) as conn:
+            [print(character.Character(*list(row))) for row in conn.execute("SELECT * FROM Characters").fetchall()]
+
+    def save(self):
+        os.remove(self.db)
+        self.init_db()
+        with sql.connect(self.db) as conn:
+            for char in character.characters.values():
+                titles = '|'.join([title.title for title in char.name.titles])
+                conn.execute("INSERT INTO Characters VALUES (" + ', '.join(['?'] * 16) + ")",
+                             (char.name.name, titles, char.height, char.weight, char.looks,
+                              char.race.name, char.gender, char.character_class.name,
+                              char.character_class.level,
+                              str(char.alignment), char.hit_point_max, char.initiative, char.speed,
+                              char.armor_class,
+                              char.attack_bonus,
+                              str(char.id)))
+            conn.commit()
+
+    def init_db(self):
+        if not os.path.exists(self.db):
+            open(self.db, 'x')
+        with sql.connect(self.db) as conn:
+            columns = ['name TEXT',
+                       'titles TEXT',
+                       'height REAL',
+                       'weight REAL',
+                       'looks TEXT',
+                       'race TEXT',
+                       'gender TEXT',
+                       'character_class TEXT',
+                       'class_level INTEGER',
+                       'alignment TEXT',
+                       'hit_point_max INTEGER',
+                       'initiative INTEGER',
+                       'speed INTEGER',
+                       'armor_class INTEGER',
+                       'attack_bonus INTEGER',
+                       'id_num TEXT']
+            conn.execute("CREATE TABLE IF NOT EXISTS Characters(" + ', '.join(columns) + ")")
+            conn.commit()
+
 
 if __name__ == '__main__':
-  root = Tk()
-  gui = dndgui(root)
-  gui.config(height=500,width=500)
-  gui.pack()
-  root.mainloop()
+    root = tk.Tk()
+    gui = DndGui(root)
+    gui.config(height=500, width=500)
+    gui.pack()
+    root.mainloop()
