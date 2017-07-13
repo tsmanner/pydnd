@@ -1,5 +1,6 @@
-import dndtypes
 import random
+
+from app import dndtypes
 
 NO_DAMAGE = -1
 SLASH = 0

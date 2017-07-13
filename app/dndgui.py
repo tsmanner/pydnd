@@ -1,12 +1,11 @@
-import character
-import classes
 import collections
-import dndtypes
 import os
-import races
 import sqlite3 as sql
 import tkinter as tk
+
 import weapons
+
+from app import character
 
 
 class DndGui(tk.Frame):
