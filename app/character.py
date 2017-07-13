@@ -1,4 +1,3 @@
-from .base import *
 from .classes import *
 from .feats import *
 from .races import *
@@ -9,6 +8,12 @@ class ClassProgression(list):
     def __init__(self):
         super().__init__()
 
+    def _update_hit_points(self):
+        if len(self) > 0:
+            self[0].hit_points = self[0].hit_die.sides
+        for dcls in self[1:]:  # type: DndClass
+            dcls.hit_points = dcls.hit_die.roll
+
     def class_level(self, dnd_class: Type[DndClass], character_level: Optional[int] = None):
         if character_level is None:
             return len(list(filter(lambda dc: isinstance(dc, dnd_class), self)))
@@ -16,6 +21,7 @@ class ClassProgression(list):
 
     def append(self, dnd_class: Type[DndClass]):
         super().append(dnd_class(self.class_level(dnd_class) + 1))
+        self._update_hit_points()
 
     def __setitem__(self, key: int, dnd_class: Type[DndClass]):
         """ Replace a character level with a different class.
@@ -31,12 +37,14 @@ class ClassProgression(list):
         for item in self[key+1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
+        self._update_hit_points()
 
     def insert(self, index: int, dnd_class: Type[DndClass]):
         super().insert(index, dnd_class(self.class_level(dnd_class, index + 1) + 1))
         for item in self[index+1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
+        self._update_hit_points()
 
     def current(self, character_level: Optional[int] = None):
         cur = {}
@@ -76,6 +84,9 @@ class Character:
     def _aspects(self, level: Optional[int] = None):
         return self.classes.current(level) + [self.race]
 
+    def hit_points(self, level: Optional[int] = None):
+        return sum([item.hit_points for item in self.classes[:level]])
+
     def base_attack_bonus(self, level: Optional[int] = None):
         return sum([item.attack["base"] for item in self._aspects(level)])
 
@@ -92,9 +103,10 @@ class Character:
         lines = [f"Level {self.level} {self.race} [{', '.join([str(c) for c in self.classes.current()])}]"]
         if self.level == 0:
             return lines[0]
-        lines.append("  Lvl BaB Fort Ref Will Class")
+        lines.append("  Lvl HP BaB Fort Ref Will Class")
         for lvl in range(1, self.level+1):
             lines.append(f"  {lvl:>2}: "
+                         f"{self.hit_points(lvl):^2} "
                          f"{self.base_attack_bonus(lvl):^3} "
                          f"{self.fortitude_save(lvl):^4} "
                          f"{self.reflex_save(lvl):^3} "

@@ -5,13 +5,15 @@ __all__ = [
 ]
 
 import math
-from .base import DndBase
+from .base import Die, DndBase
 
 
 class DndClass(DndBase):
-    def __init__(self, level):
+    def __init__(self, level, hit_die: int):
         super().__init__()
         self.level = level
+        self.hit_die = Die(hit_die)
+        self.hit_points = self.hit_die.roll
         self.save["fortitude"].append(self.save_secondary(), "class")
         self.save["reflex"].append(self.save_secondary(), "class")
         self.save["will"].append(self.save_secondary(), "class")
@@ -59,7 +61,7 @@ class Ninja(DndClass):
     Will Save: Primary (2 + 0.5/lvl)
     """
     def __init__(self, level: int):
-        super().__init__(level)
+        super().__init__(level, 6)
         self.attack["base"].append(self.bab_0_75(), "class")
         self.save["will"][0] = (self.save_primary(), "class")
 
@@ -72,6 +74,6 @@ class Wizard(DndClass):
     Will Save: Primary (2 + 0.5/lvl)
     """
     def __init__(self, level: int):
-        super().__init__(level)
+        super().__init__(level, 4)
         self.attack["base"].append(self.bab_0_75(), "class")
         self.save["will"][0] = (self.save_primary(), "class")

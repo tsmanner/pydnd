@@ -1,4 +1,5 @@
 from collections import defaultdict
+from random import randint
 from typing import Iterable, Optional, Union
 
 
@@ -133,3 +134,12 @@ class DndBase:
             return super().__getattribute__(item)
         except AttributeError:
             return Bonus()
+
+
+class Die:
+    def __init__(self, sides: int):
+        self.sides = sides
+
+    @property
+    def roll(self):
+        return randint(0, self.sides) + 1
