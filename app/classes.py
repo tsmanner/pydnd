@@ -75,5 +75,5 @@ class Wizard(DndClass):
     """
     def __init__(self, level: int):
         super().__init__(level, 4)
-        self.attack["base"].append(self.bab_0_75(), "class")
+        self.attack["base"].append(self.bab_0_5(), "class")
         self.save["will"][0] = (self.save_primary(), "class")

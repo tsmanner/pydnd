@@ -1,3 +1,4 @@
+from .base import *
 from .classes import *
 from .feats import *
 from .races import *
@@ -46,13 +47,16 @@ class ClassProgression(list):
                 item.level += 1
         self._update_hit_points()
 
-    def current(self, character_level: Optional[int] = None):
+    def all(self, character_level: Optional[int] = None):
         cur = {}
         if character_level is None:
-            segment = self
+            return self
         else:
-            segment = self[:character_level]
-        for cls in segment:
+            return self[:character_level]
+
+    def current(self, character_level: Optional[int] = None):
+        cur = {}
+        for cls in self.all(character_level):
             cur[cls.__class__.__name__] = cls
         return list(cur.values())
 
@@ -84,8 +88,14 @@ class Character:
     def _aspects(self, level: Optional[int] = None):
         return self.classes.current(level) + [self.race]
 
-    def hit_points(self, level: Optional[int] = None):
-        return sum([item.hit_points for item in self.classes[:level]])
+    def hit_die(self, level: Optional[int] = None):
+        classes = self.classes.all(level)
+        hd = Roll()
+        if len(classes) > 0:
+            hd.append(classes[0].hit_die.sides)
+            if len(classes) > 1:
+                hd.extend([item.hit_die for item in classes[1:]])
+        return hd
 
     def base_attack_bonus(self, level: Optional[int] = None):
         return sum([item.attack["base"] for item in self._aspects(level)])
@@ -103,14 +113,14 @@ class Character:
         lines = [f"Level {self.level} {self.race} [{', '.join([str(c) for c in self.classes.current()])}]"]
         if self.level == 0:
             return lines[0]
-        lines.append("  Lvl HP BaB Fort Ref Will Class")
+        lines.append("  Lvl BaB Fort Ref Will Class      HD")
         for lvl in range(1, self.level+1):
             lines.append(f"  {lvl:>2}: "
-                         f"{self.hit_points(lvl):^2} "
                          f"{self.base_attack_bonus(lvl):^3} "
                          f"{self.fortitude_save(lvl):^4} "
                          f"{self.reflex_save(lvl):^3} "
                          f"{self.will_save(lvl):^4} "
-                         f"{self.classes[lvl-1]}"
+                         f"{self.classes[lvl-1]:<10} "
+                         f"{self.hit_die(lvl)}"
                          )
         return "\n".join(lines)
