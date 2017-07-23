@@ -1,4 +1,4 @@
-from .abilities import Abilities
+from .abilities import AbilityProgression
 from .base import *
 from .classes import *
 from .feats import *
@@ -7,8 +7,9 @@ from typing import Dict, Optional, Type
 
 
 class ClassProgression(list):
-    def __init__(self):
+    def __init__(self, character):
         super().__init__()
+        self.character = character
 
     def _update_hit_points(self):
         if len(self) > 0:
@@ -22,7 +23,7 @@ class ClassProgression(list):
         return len(list(filter(lambda dc: isinstance(dc, dnd_class), self[:character_level])))
 
     def append(self, dnd_class: Type[DndClass]):
-        super().append(dnd_class(self.class_level(dnd_class) + 1))
+        super().append(dnd_class(self.character, self.class_level(dnd_class) + 1))
         self._update_hit_points()
 
     def __setitem__(self, key: int, dnd_class: Type[DndClass]):
@@ -35,14 +36,14 @@ class ClassProgression(list):
         for item in self[key+1:]:
             if isinstance(item, old_type):
                 item.level -= 1
-        super().__setitem__(key, dnd_class(self.class_level(dnd_class, key + 1) + 1))
+        super().__setitem__(key, dnd_class(self.character, self.class_level(dnd_class, key + 1) + 1))
         for item in self[key+1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
         self._update_hit_points()
 
     def insert(self, index: int, dnd_class: Type[DndClass]):
-        super().insert(index, dnd_class(self.class_level(dnd_class, index + 1) + 1))
+        super().insert(index, dnd_class(self.character, self.class_level(dnd_class, index + 1) + 1))
         for item in self[index+1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
@@ -74,17 +75,16 @@ class ClassProgression(list):
 
 class Character:
     def __init__(self, race: Type[Race]):
-        self.classes = ClassProgression()
-        self.race = race()
+        self.classes = ClassProgression(self)
         self.feats = {}  # type: Dict[int, Feat]
         self.flaws = {}  # type: Dict[int, Flaw]
-        self.abilities = Abilities(self)
+        self.abilities = AbilityProgression()
+        self.race = race(self)
 
     def level_up(self, dnd_class: Type[DndClass]):
         self.classes.append(dnd_class)
 
     def hit_points(self, level: Optional[int] = None):
-
         return
 
     @property

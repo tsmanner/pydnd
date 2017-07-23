@@ -118,15 +118,17 @@ class SaveBonus(BonusGroup):
         "will": "wisdom",
     }
 
-    def __init__(self, character):
-        self.character = character
+    def __init__(self, parent: "DndBase"):
+        super().__init__()
+        self.parent = parent
 
     def __getitem__(self, item: str):
         save = super().__getitem__(item)
         if item in self.links:
             linked = self.links[item]
-            if linked in self.character.abilities:
-                save += self.character.abilities[linked]
+            if linked in self.parent.character.abilities.ability_names:
+                print(self.parent.character.abilities[2])
+                save += self.parent.character.abilities[2][linked]  # TODO: Figure out how to attach the level here.
             save += self[self.links[item]]
         if "all" in self:
             save += super().__getitem__("all")
@@ -135,8 +137,9 @@ class SaveBonus(BonusGroup):
 
 class DndBase:
     def __init__(self, character):
+        self.character = character
         self.attack = AttackBonus()
-        self.save = SaveBonus(character)
+        self.save = SaveBonus(self)
 
     def __format__(self, format_spec):
         return str(self).__format__(format_spec)

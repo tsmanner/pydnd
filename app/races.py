@@ -1,4 +1,4 @@
-from .base import BonusAtom, DndBase
+from .base import DndBase
 from math import floor
 
 
@@ -26,43 +26,41 @@ class Small(Race):
         self.hide.append(4, "size")
         self.speed.append(20, "size")
 
-    @staticmethod
-    def carrying_capacity(strength: int):
+    def carrying_capacity(self):
         return {
-            "light": floor(strength * Race.LIGHT_LOAD * 3/4),
-            "medium": floor(strength * Race.MEDIUM_LOAD * 3/4),
-            "heavy": floor(strength * Race.HEAVY_LOAD * 3/4),
+            "light": floor(self.character.abilities.strength * Race.LIGHT_LOAD * 3/4),
+            "medium": floor(self.character.abilities.strength * Race.MEDIUM_LOAD * 3/4),
+            "heavy": floor(self.character.abilities.strength * Race.HEAVY_LOAD * 3/4),
         }
 
 
 class Medium(Race):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, character):
+        super().__init__(character)
 
-    @staticmethod
-    def carrying_capacity(strength: int):
+    def carrying_capacity(self):
         return {
-            "light": floor(strength * Race.LIGHT_LOAD),
-            "medium": floor(strength * Race.MEDIUM_LOAD),
-            "heavy": floor(strength * Race.HEAVY_LOAD),
+            "light": floor(self.character.abilities.strength * Race.LIGHT_LOAD),
+            "medium": floor(self.character.abilities.strength * Race.MEDIUM_LOAD),
+            "heavy": floor(self.character.abilities.strength * Race.HEAVY_LOAD),
         }
 
 
 class Halfling(Small):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, character):
+        super().__init__(character)
         self.attack["sling"].append(1, "racial")
         self.attack["thrown"].append(1, "racial")
         self.climb.append(2, "racial")
-        self.dexterity.append(2, "racial")
         self.jump.append(2, "racial")
         self.move_silently.append(2, "racial")
         self.save["all"].append(1, "racial")
         self.save["fear"].append(2, "morale")
-        self.strength.append(-2, "racial")
+        self.character.abilities["racial"].strength -= 2
+        self.character.abilities["racial"].dexterity += 2
 
 
 class Human(Medium):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, character):
+        super().__init__(character)
 

@@ -9,8 +9,8 @@ from .base import Die, DndBase
 
 
 class DndClass(DndBase):
-    def __init__(self, level, hit_die: int):
-        super().__init__()
+    def __init__(self, character, level, hit_die: int):
+        super().__init__(character)
         self.level = level
         self.hit_die = Die(hit_die)
         self.hit_points = self.hit_die.roll
@@ -49,8 +49,8 @@ class DndClass(DndBase):
 
 
 class PresigeClass(DndClass):
-    def __init__(self, level):
-        super().__init__(level, 8)
+    def __init__(self, character, level):
+        super().__init__(character, level, 8)
 
 
 
@@ -66,8 +66,8 @@ class Ninja(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, level: int):
-        super().__init__(level, 6)
+    def __init__(self, character, level: int):
+        super().__init__(character, level, 6)
         self.attack["base"].append(self.bab_0_75(), "class")
         self.save["will"][0] = (self.save_primary(), "class")
 
@@ -79,8 +79,8 @@ class Wizard(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, level: int):
-        super().__init__(level, 4)
+    def __init__(self, character, level: int):
+        super().__init__(character, level, 4)
         self.attack["base"].append(self.bab_0_5(), "class")
         self.save["will"][0] = (self.save_primary(), "class")
 
