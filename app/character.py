@@ -1,3 +1,4 @@
+from .abilities import Abilities
 from .base import *
 from .classes import *
 from .feats import *
@@ -77,9 +78,14 @@ class Character:
         self.race = race()
         self.feats = {}  # type: Dict[int, Feat]
         self.flaws = {}  # type: Dict[int, Flaw]
+        self.abilities = Abilities(self)
 
     def level_up(self, dnd_class: Type[DndClass]):
         self.classes.append(dnd_class)
+
+    def hit_points(self, level: Optional[int] = None):
+
+        return
 
     @property
     def level(self):

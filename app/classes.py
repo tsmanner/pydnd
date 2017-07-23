@@ -48,6 +48,12 @@ class DndClass(DndBase):
         return math.floor((1/3) * self.level)
 
 
+class PresigeClass(DndClass):
+    def __init__(self, level):
+        super().__init__(level, 8)
+
+
+
 """
 Class Definitions
 """
@@ -77,3 +83,7 @@ class Wizard(DndClass):
         super().__init__(level, 4)
         self.attack["base"].append(self.bab_0_5(), "class")
         self.save["will"][0] = (self.save_primary(), "class")
+
+
+class MasterThrower(PresigeClass):
+    pass

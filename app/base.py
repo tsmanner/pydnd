@@ -111,23 +111,32 @@ class AttackBonus(BonusGroup):
 
 
 class SaveBonus(BonusGroup):
-    types = {
+    links = {
         "fear": "will",
+        "fortitude": "constitution",
+        "reflex": "dexterity",
+        "will": "wisdom",
     }
+
+    def __init__(self, character):
+        self.character = character
 
     def __getitem__(self, item: str):
         save = super().__getitem__(item)
-        if item in self.types:
-            save += self[self.types[item]]
+        if item in self.links:
+            linked = self.links[item]
+            if linked in self.character.abilities:
+                save += self.character.abilities[linked]
+            save += self[self.links[item]]
         if "all" in self:
             save += super().__getitem__("all")
         return save
 
 
 class DndBase:
-    def __init__(self):
+    def __init__(self, character):
         self.attack = AttackBonus()
-        self.save = SaveBonus()
+        self.save = SaveBonus(character)
 
     def __format__(self, format_spec):
         return str(self).__format__(format_spec)

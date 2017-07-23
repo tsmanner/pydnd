@@ -17,3 +17,4 @@ if __name__ == '__main__':
     char.level_up(Wizard)
     char.level_up(Ninja)
     print(char)
+    print(char.hit_die(5).roll)

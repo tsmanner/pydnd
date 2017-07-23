@@ -19,8 +19,8 @@ class Small(Race):
     ~2/3 Speed (20)
     3/4 Carry Capacity
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, character):
+        super().__init__(character)
         self.armor_class.append(1, "size")
         self.attack[""].append(1, "size")
         self.hide.append(4, "size")
