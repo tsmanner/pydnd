@@ -78,7 +78,7 @@ class Character:
         self.classes = ClassProgression(self)
         self.feats = {}  # type: Dict[int, Feat]
         self.flaws = {}  # type: Dict[int, Flaw]
-        self.abilities = AbilityProgression()
+        # self.abilities = AbilityProgression()
         self.race = race(self)
 
     def level_up(self, dnd_class: Type[DndClass]):

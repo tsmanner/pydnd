@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import reduce
 from typing import DefaultDict, Union
 
 
@@ -51,7 +52,11 @@ class AbilityProgression(defaultdict):  # type: DefaultDict[Union[str, int], Abi
     def __init__(self):
         super().__init__(Abilities)
 
-    def __getitem__(self, item: Union[str, int]):
-        if isinstance(item, int):
-            return sum([self[key] for key in filter(lambda k: isinstance(k, str) or k <= item, self)])
-        return super().__getitem__(item)
+    def level(self, item: Union[str, int]):
+        if not isinstance(item, int):
+            raise TypeError(f"argument to {self.__class__.__name__}.AbilityProgression must be 'int'")
+        abilities = Abilities()
+        print([self[key] for key in filter(lambda k: isinstance(k, str) or k <= item, self)])
+        return reduce(lambda a, b: a + b,
+                      [self[key] for key in filter(lambda k: isinstance(k, str) or k <= item, self)],
+                      abilities)
