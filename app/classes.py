@@ -10,17 +10,15 @@ from .base import Die, DndBase
 
 
 class DndClass(DndBase):
-    def __init__(self, level, hit_die):
+    def __init__(self, character, level, hit_die):
         super().__init__()
+        self.character = character
         self.level = level
         self.hit_die = Die(hit_die)
         self.hit_points = self.hit_die.roll
         self.fortitude.append(self.save_secondary(), "class")
-        # self.save["fortitude"].append(self.save_secondary(), "class")
         self.reflex.append(self.save_secondary(), "class")
-        # self.save["reflex"].append(self.save_secondary(), "class")
         self.will.append(self.save_secondary(), "class")
-        # self.save["will"].append(self.save_secondary(), "class")
 
     def __str__(self):
         return f"{self.__class__.__name__}{self.level}"
@@ -53,8 +51,8 @@ class DndClass(DndBase):
 
 
 class PresigeClass(DndClass):
-    def __init__(self, level, hit_die, prerequisites = None):
-        super().__init__(level, hit_die)
+    def __init__(self, character, level, hit_die, prerequisites = None):
+        super().__init__(character, level, hit_die)
 
 
 
@@ -70,8 +68,12 @@ class Ninja(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, level):
-        super().__init__(level, 6)
+    def __init__(self, character, level):
+        super().__init__(character, level, 6)
+        # TODO: How to easily add this as part of the level based bonuses.
+        # TODO:   Refactor everything so a "Player" has a "Character" list which shows increments?
+        # TODO:   Let AC etc be "global" and print them as part of the header?
+        self.character.armor_class.append(int(character.bonus("wisdom")) + (level // 5), "ninja")
         self.attack["base"].append(self.bab_0_75(), "class")
         self.will[0] = (self.save_primary(), "class")
 
@@ -83,8 +85,8 @@ class Wizard(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, level):
-        super().__init__(level, 4)
+    def __init__(self, character, level):
+        super().__init__(character, level, 4)
         self.attack["base"].append(self.bab_0_5(), "class")
         self.will[0] = (self.save_primary(), "class")
 
@@ -96,7 +98,7 @@ class MasterThrower(PresigeClass):
     Reflex Save: Primary (2 + 0.5/lvl)
     Will Save: Secondary (0.33/lvl)
     """
-    def __init__(self, level):
-        super().__init__(level, 8)
+    def __init__(self, character, level):
+        super().__init__(character, level, 8)
         self.attack["base"].append(self.bab_0_5(), "class")
         self.reflex[0] = (self.save_primary(), "class")

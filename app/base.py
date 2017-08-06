@@ -3,7 +3,7 @@ from random import randint
 
 from typing import Iterable, Optional, Union
 
-from app.bonus import AttackBonus, AbilityBonus, Bonus, SaveBonus
+from app.bonus import AttackBonus, AbilityBonus, Bonus
 
 
 class DndBase:
@@ -18,7 +18,6 @@ class DndBase:
 
     def __init__(self):
         self.attack = AttackBonus()
-        # self.save = SaveBonus(self)
 
     def __format__(self, format_spec):
         return str(self).__format__(format_spec)

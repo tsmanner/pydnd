@@ -13,7 +13,7 @@ class BonusProgression:
 
     def __getitem__(self, level: Union[int, None]):
         if level is None:
-            level = self.character.level
+            level = self.character.level()
         key = level - 1
         filtered = list(filter(lambda k: k <= key, self._bonuses.keys()))
         if len(filtered) > 0:
@@ -27,8 +27,9 @@ class BonusProgression:
 
 
 class ClassProgression(list):
-    def __init__(self):
+    def __init__(self, character: "Character"):
         super().__init__()
+        self.character = character
 
     def _update_hit_points(self):
         if len(self) > 0:
@@ -42,7 +43,7 @@ class ClassProgression(list):
         return len(list(filter(lambda dc: isinstance(dc, dnd_class), self[:character_level])))
 
     def append(self, dnd_class: Type[DndClass]):
-        super().append(dnd_class(self.class_level(dnd_class) + 1))
+        super().append(dnd_class(self.character, self.class_level(dnd_class) + 1))
         self._update_hit_points()
 
     def __setitem__(self, key: int, dnd_class: Type[DndClass]):
@@ -92,6 +93,7 @@ class ClassProgression(list):
 
 class Character(DndBase):
     save_links = {
+        "armor_class": "dexterity",
         "fear": "will",
         "fortitude": "constitution",
         "reflex": "dexterity",
@@ -100,24 +102,25 @@ class Character(DndBase):
 
     def __init__(self, race: Type[Race]):
         super().__init__()
-        self.classes = ClassProgression()
+        self.armor_class.append(10, "base")
+        self.classes = ClassProgression(self)
         self.level_bonuses = BonusProgression(self)
         self.feats = {}  # type: Dict[int, Feat]
         self.flaws = {}  # type: Dict[int, Flaw]
-        # self.abilities = AbilityProgression()
         self.race = race()
 
     def level_up(self, dnd_class: Type[DndClass], bonuses: Optional[Dict[str, int]] = None):
         self.classes.append(dnd_class)
         if bonuses is not None:
-            self.level_bonuses[self.level] = DndBase()
-            [self.level_bonuses[self.level].__getattribute__(k).append(bonuses[k], "level") for k in bonuses]
+            self.level_bonuses[self.level()] = DndBase()
+            [self.level_bonuses[self.level()].__getattribute__(k).append(bonuses[k], "level") for k in bonuses]
 
     def hit_points(self, level: Optional[int] = None):
         return
 
-    @property
-    def level(self):
+    def level(self, dnd_class: Optional[Type[DndClass]] = None):
+        if dnd_class is not None:
+            return len(list(filter(lambda c: isinstance(c, dnd_class), self.classes)))
         return len(self.classes)
 
     def _aspects(self, level: Optional[int] = None):
@@ -168,8 +171,11 @@ class Character(DndBase):
         return sum([item.save["will"] for item in self._aspects(level)])
 
     def __str__(self):
-        lines = [f"Level {self.level} {self.race} [{', '.join([str(c) for c in self.classes.current()])}]"]
-        if self.level == 0:
+        lines = [
+            f"Level {self.level()} {self.race} [{', '.join([str(c) for c in self.classes.current()])}]",
+            f"AC: {self.save('armor_class'):^2}"
+        ]
+        if self.level() == 0:
             return lines[0]
         class_width = max([len(str(item)) for item in self.classes])
         stat_width = 6
@@ -184,9 +190,10 @@ class Character(DndBase):
                      f"Fort "
                      f"Ref "
                      f"Will  "
+                     f"AC "
                      f"{'Class':<{class_width}} "
                      f"HD")
-        for lvl in range(1, self.level+1):
+        for lvl in range(1, self.level()+1):
             lines.append(f"  {lvl:>2}: "
                          f"{self.bonus('strength', lvl):^{stat_width}} "
                          f"{self.bonus('dexterity', lvl):^{stat_width}} "

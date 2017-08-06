@@ -1,8 +1,6 @@
 from collections import defaultdict
 from typing import Union, Optional, Iterable
 
-import app.base
-
 
 class BonusSource:
     pass
@@ -16,6 +14,7 @@ class BonusAtom(int):
     stacking_sources = [
         "class",
         "dodge",
+        "flaw",
         "level",
     ]
 
@@ -135,6 +134,10 @@ class AbilityBonus(Bonus):
         return f"{self.score}({int(self)})"
 
 
+class ArmorClass(Bonus):
+    pass
+
+
 class BonusGroup(defaultdict):
     def __init__(self):
         super().__init__(Bonus)
@@ -144,27 +147,3 @@ class AttackBonus(BonusGroup):
     types = {
 
     }
-
-
-class SaveBonus(BonusGroup):
-    links = {
-        "fear": "will",
-        "fortitude": "constitution",
-        "reflex": "dexterity",
-        "will": "wisdom",
-    }
-
-    def __init__(self, character: "app.base.DndBase"):
-        super().__init__()
-        self.character = character
-
-    def __getitem__(self, item: str):
-        if item in app.base.DndBase.Abilities:
-            return self.character.bonus(item)
-        save = super().__getitem__(item)
-        if item in self.links:
-            linked = self.links[item]
-            save += self[self.links[item]]
-        if "all" in self:
-            save += super().__getitem__("all")
-        return save
