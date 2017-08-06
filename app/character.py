@@ -170,14 +170,17 @@ class Character(DndBase):
     def will_save(self, level: Optional[int] = None):
         return sum([item.save["will"] for item in self._aspects(level)])
 
-    def __str__(self):
+    def __str__(self, all_levels: bool = False):
         lines = [
-            f"Level {self.level()} {self.race} [{', '.join([str(c) for c in self.classes.current()])}]",
+            f"Level {self.level()} {self.race} {'/'.join([str(c) for c in self.classes.current()])}",
             f"AC: {self.save('armor_class'):^2}"
         ]
         if self.level() == 0:
             return lines[0]
-        class_width = max([len(str(item)) for item in self.classes])
+        if all_levels:
+            class_width = max([len(str(item)) for item in self.classes])
+        else:
+            class_width = len(str(self.classes[-1]))
         stat_width = 6
         lines.append(f"  Lvl "
                      f"{'Str':^{stat_width}} "
@@ -190,22 +193,38 @@ class Character(DndBase):
                      f"Fort "
                      f"Ref "
                      f"Will  "
-                     f"AC "
                      f"{'Class':<{class_width}} "
                      f"HD")
-        for lvl in range(1, self.level()+1):
-            lines.append(f"  {lvl:>2}: "
-                         f"{self.bonus('strength', lvl):^{stat_width}} "
-                         f"{self.bonus('dexterity', lvl):^{stat_width}} "
-                         f"{self.bonus('constitution', lvl):^{stat_width}} "
-                         f"{self.bonus('intelligence', lvl):^{stat_width}} "
-                         f"{self.bonus('wisdom', lvl):^{stat_width}} "
-                         f"{self.bonus('charisma', lvl):^{stat_width}} "
-                         f"{self.base_attack_bonus(lvl):^3} "
-                         f"{self.save('fortitude', lvl):^4} "
-                         f"{self.save('reflex', lvl):^4} "
-                         f"{self.save('will', lvl):^4} "
-                         f"{self.classes[lvl-1]:<{class_width}} "
-                         f"{self.hit_die(lvl)}"
+        if all_levels:
+            for lvl in range(1, self.level()+1):
+                lines.append(f"  {lvl:>2}: "
+                             f"{self.bonus('strength', lvl):^{stat_width}} "
+                             f"{self.bonus('dexterity', lvl):^{stat_width}} "
+                             f"{self.bonus('constitution', lvl):^{stat_width}} "
+                             f"{self.bonus('intelligence', lvl):^{stat_width}} "
+                             f"{self.bonus('wisdom', lvl):^{stat_width}} "
+                             f"{self.bonus('charisma', lvl):^{stat_width}} "
+                             f"{self.base_attack_bonus(lvl):^3} "
+                             f"{self.save('fortitude', lvl):^4} "
+                             f"{self.save('reflex', lvl):^4} "
+                             f"{self.save('will', lvl):^4} "
+                             f"{self.classes[lvl-1]:<{class_width}} "
+                             f"{self.hit_die(lvl)}"
+                             )
+        else:
+            lines.append(f"  {self.level():>2}: "
+                         f"{self.bonus('strength'):^{stat_width}} "
+                         f"{self.bonus('dexterity'):^{stat_width}} "
+                         f"{self.bonus('constitution'):^{stat_width}} "
+                         f"{self.bonus('intelligence'):^{stat_width}} "
+                         f"{self.bonus('wisdom'):^{stat_width}} "
+                         f"{self.bonus('charisma'):^{stat_width}} "
+                         f"{self.base_attack_bonu:^3} "
+                         f"{self.save('fortitude'):^4} "
+                         f"{self.save('reflex'):^4} "
+                         f"{self.save('will'):^4} "
+                         f"{self.classes[-1]:<{class_width}} "
+                         f"{self.hit_die()}"
                          )
+
         return "\n".join(lines)
