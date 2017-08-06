@@ -1,5 +1,5 @@
-from .base import *
-from .abilities import *
-from .character import *
-from .classes import *
-from .races import *
+from app.base import *
+# from app.bonus import AbilityBonus
+from app.character import *
+from app.classes import *
+from app.races import *

@@ -3,14 +3,22 @@ from random import randint
 
 from typing import Iterable, Optional, Union
 
-from .bonus import AttackBonus, Bonus, SaveBonus
+from app.bonus import AttackBonus, AbilityBonus, Bonus, SaveBonus
 
 
 class DndBase:
-    def __init__(self, character):
-        self.character = character
+    Abilities = {
+        "strength",
+        "dexterity",
+        "constitution",
+        "intelligence",
+        "wisdom",
+        "charisma",
+    }
+
+    def __init__(self):
         self.attack = AttackBonus()
-        self.save = SaveBonus(self)
+        # self.save = SaveBonus(self)
 
     def __format__(self, format_spec):
         return str(self).__format__(format_spec)
@@ -19,7 +27,11 @@ class DndBase:
         try:
             return super().__getattribute__(item)
         except AttributeError:
-            return Bonus()
+            if item in DndBase.Abilities:
+                self.__setattr__(item, AbilityBonus())
+            else:
+                self.__setattr__(item, Bonus())
+            return super().__getattribute__(item)
 
 
 class Die:

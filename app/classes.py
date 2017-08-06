@@ -1,5 +1,6 @@
 __all__ = [
     "DndClass",
+    "MasterThrower",
     "Ninja",
     "Wizard",
 ]
@@ -9,14 +10,17 @@ from .base import Die, DndBase
 
 
 class DndClass(DndBase):
-    def __init__(self, character, level, hit_die: int):
-        super().__init__(character)
+    def __init__(self, level, hit_die):
+        super().__init__()
         self.level = level
         self.hit_die = Die(hit_die)
         self.hit_points = self.hit_die.roll
-        self.save["fortitude"].append(self.save_secondary(), "class")
-        self.save["reflex"].append(self.save_secondary(), "class")
-        self.save["will"].append(self.save_secondary(), "class")
+        self.fortitude.append(self.save_secondary(), "class")
+        # self.save["fortitude"].append(self.save_secondary(), "class")
+        self.reflex.append(self.save_secondary(), "class")
+        # self.save["reflex"].append(self.save_secondary(), "class")
+        self.will.append(self.save_secondary(), "class")
+        # self.save["will"].append(self.save_secondary(), "class")
 
     def __str__(self):
         return f"{self.__class__.__name__}{self.level}"
@@ -49,8 +53,8 @@ class DndClass(DndBase):
 
 
 class PresigeClass(DndClass):
-    def __init__(self, character, level):
-        super().__init__(character, level, 8)
+    def __init__(self, level, hit_die, prerequisites = None):
+        super().__init__(level, hit_die)
 
 
 
@@ -66,10 +70,10 @@ class Ninja(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, character, level: int):
-        super().__init__(character, level, 6)
+    def __init__(self, level):
+        super().__init__(level, 6)
         self.attack["base"].append(self.bab_0_75(), "class")
-        self.save["will"][0] = (self.save_primary(), "class")
+        self.will[0] = (self.save_primary(), "class")
 
 
 class Wizard(DndClass):
@@ -79,11 +83,20 @@ class Wizard(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, character, level: int):
-        super().__init__(character, level, 4)
+    def __init__(self, level):
+        super().__init__(level, 4)
         self.attack["base"].append(self.bab_0_5(), "class")
-        self.save["will"][0] = (self.save_primary(), "class")
+        self.will[0] = (self.save_primary(), "class")
 
 
 class MasterThrower(PresigeClass):
-    pass
+    """ Master Thrower (Complete Warrior)
+    Base Attack Bonus: 1/lvl
+    Fortitude Save: Secondary (0.33/lvl)
+    Reflex Save: Primary (2 + 0.5/lvl)
+    Will Save: Secondary (0.33/lvl)
+    """
+    def __init__(self, level):
+        super().__init__(level, 8)
+        self.attack["base"].append(self.bab_0_5(), "class")
+        self.reflex[0] = (self.save_primary(), "class")

@@ -1,9 +1,14 @@
 from collections import defaultdict
-
 from typing import Union, Optional, Iterable
+
+import app.base
 
 
 class BonusSource:
+    pass
+
+
+class BonusSourceStacking:
     pass
 
 
@@ -14,7 +19,7 @@ class BonusAtom(int):
         "level",
     ]
 
-    def __new__(cls, value, source: BonusSource, *args):
+    def __new__(cls, value, source: str, *args):
         new_bonus = int.__new__(cls, value, *args)
         new_bonus.source = source
         return new_bonus
@@ -100,8 +105,34 @@ class Bonus(list):
     def __repr__(self):
         return "Bonus" + super().__repr__()
 
+    def __format__(self, format_spec):
+        return str(self).__format__(format_spec)
+
     def __str__(self):
         return str(int(self))
+
+
+class AbilityBonus(Bonus):
+    def __add__(self, other):
+        if isinstance(other, AbilityBonus):
+            return AbilityBonus(super().__add__(other))
+        return super().__add__(other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    @property
+    def score(self):
+        return super().__int__()
+
+    def __int__(self):
+        return (super().__int__() - 10) // 2
+
+    def __repr__(self):
+        return "Ability" + super().__repr__()
+
+    def __str__(self):
+        return f"{self.score}({int(self)})"
 
 
 class BonusGroup(defaultdict):
@@ -123,16 +154,16 @@ class SaveBonus(BonusGroup):
         "will": "wisdom",
     }
 
-    def __init__(self, parent: "DndBase"):
+    def __init__(self, character: "app.base.DndBase"):
         super().__init__()
-        self.parent = parent
+        self.character = character
 
     def __getitem__(self, item: str):
+        if item in app.base.DndBase.Abilities:
+            return self.character.bonus(item)
         save = super().__getitem__(item)
         if item in self.links:
             linked = self.links[item]
-            if linked in self.parent.character.abilities.ability_names:
-                save += self.parent.character.__getattribute__(linked)  # TODO: Figure out how to attach the level here.
             save += self[self.links[item]]
         if "all" in self:
             save += super().__getitem__("all")
