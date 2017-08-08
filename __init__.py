@@ -12,8 +12,9 @@ if __name__ == '__main__':
 
     char = Character(Halfling)  # Base
     char.armor_class.append(-1, "flaw")  # Flaw: Vulnerable
-    char.wisdom.append(2, "enhancement")  # Periapt of Wisdom
+    char.attack["melee"].append(-2, "flaw")  # Flaw: Noncombatant
     char.dexterity.append(2, "enhancement")  # Gloves of Dexterity
+    char.wisdom.append(2, "enhancement")  # Periapt of Wisdom
 
     char.level_up(Ninja, stats)  # Level 1
     char.level_up(Wizard)  # Level 2
