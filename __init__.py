@@ -1,3 +1,4 @@
+from functools import partial
 from app import *
 
 if __name__ == '__main__':
@@ -19,17 +20,32 @@ if __name__ == '__main__':
     char.reflex.append(1, "enhancement")  # +1 Cloak of Resistance
     char.will.append(1, "enhancement")  # +1 Cloak of Resistance
 
+    point_blank_shot = Feat("Point Blank Shot", "+1 Attack Bonus and Damage with ranged weapons when within 30'")
+    precise_shot = Feat("Precise Shot", "No -4 Attack Bonus penalty for shooting into melee.", [point_blank_shot])
+    weapon_focus_dart = Feat("Weapon Focus(dart)", "+1 Attack Bonus with darts")
+    noncombatant = Flaw("Noncombatant", "-2 on melee Attack Bonus", precise_shot)
+    vulnerable = Flaw("Vulnerable", "-1 Armor Class", weapon_focus_dart)
+    craven = Feat("Craven", "Add character level to sneak attack damage.")
+    fiery_burst = Feat("Fiery Burst", "Nd6 Fire ball, 5' radius, 30' range.", [])
+    invisible_needle = Feat("Invisible Needle", "Nd4 force darts as thrown weapons.", [])
+
     char.level_up(Ninja, stats)  # Level 1
+    char.feats[1] = [point_blank_shot]
+    char.flaws[1] = [noncombatant, vulnerable]
+    char.feats[1].extend([precise_shot, weapon_focus_dart])
     char.level_up(Wizard)  # Level 2
     char.level_up(Ninja)  # Level 3
+    char.feats[3] = [craven]
     stats["wisdom"] += 1
     char.level_up(Wizard, stats)  # Level 4
     char.level_up(Ninja)  # Level 5
     char.level_up(Wizard)  # Level 6
-    # char.level_up(Ninja)  # Level 7
-    # stats["intelligence"] += 1
-    # char.level_up(Wizard, stats)  # Level 8
-    # char.level_up(Wizard)  # Level 9
+    char.feats[6] = [fiery_burst]
+    char.level_up(Ninja)  # Level 7
+    stats["intelligence"] += 1
+    char.level_up(Wizard, stats)  # Level 8
+    char.level_up(Wizard)  # partial(Wizard, feat=invisible_needle))  # Level 9
+    char.feats[9] = [invisible_needle]
     # char.level_up(MasterThrower)  # Level 10
     # char.level_up(Ninja)  # Level 11
     # stats["intelligence"] += 1

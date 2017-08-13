@@ -1,9 +1,10 @@
+from collections import defaultdict
+from functools import reduce
+from typing import DefaultDict, Dict, Type
 from app.base import *
 from app.classes import *
-from app.feats import *
+from app.feat import *
 from app.races import *
-from functools import reduce
-from typing import Dict, Optional, Type
 
 
 class BonusProgression:
@@ -42,8 +43,8 @@ class ClassProgression(list):
             return len(list(filter(lambda dc: isinstance(dc, dnd_class), self)))
         return len(list(filter(lambda dc: isinstance(dc, dnd_class), self[:character_level])))
 
-    def append(self, dnd_class: Type[DndClass]):
-        super().append(dnd_class(self.character, self.class_level(dnd_class) + 1))
+    def append(self, dnd_class: Type[DndClass], **kwargs):
+        super().append(dnd_class(self.character, self.class_level(dnd_class) + 1, **kwargs))
         self._update_hit_points()
 
     def __setitem__(self, key: int, dnd_class: Type[DndClass]):
@@ -105,18 +106,16 @@ class Character(DndBase):
         self.armor_class.append(10, "base")
         self.classes = ClassProgression(self)
         self.level_bonuses = BonusProgression(self)
-        self.feats = {}  # type: Dict[int, Feat]
-        self.flaws = {}  # type: Dict[int, Flaw]
+        self.feats = defaultdict(list)  # type: DefaultDict[int, Feat]
+        self.flaws = defaultdict(list)  # type: DefaultDict[int, Flaw]
         self.race = race()
 
-    def level_up(self, dnd_class: Type[DndClass], bonuses: Optional[Dict[str, int]] = None):
+    def level_up(self, dnd_class: Type[DndClass],
+                 bonuses: Optional[Dict[str, int]] = None):
         self.classes.append(dnd_class)
         if bonuses is not None:
             self.level_bonuses[self.level()] = DndBase()
             [self.level_bonuses[self.level()].__getattribute__(k).append(bonuses[k], "level") for k in bonuses]
-
-    def hit_points(self, level: Optional[int] = None):
-        return
 
     def level(self, dnd_class: Optional[Type[DndClass]] = None):
         if dnd_class is not None:
@@ -181,50 +180,54 @@ class Character(DndBase):
             class_width = max([len(str(item)) for item in self.classes])
         else:
             class_width = len(str(self.classes[-1]))
+        hd_width = max([len(str(self.hit_die(lvl+1))) for lvl in range(self.level())])
         stat_width = 6
-        lines.append(f"  Lvl "
-                     f"{'Str':^{stat_width}} "
-                     f"{'Dex':^{stat_width}} "
-                     f"{'Con':^{stat_width}} "
-                     f"{'Int':^{stat_width}} "
-                     f"{'Wis':^{stat_width}} "
-                     f"{'Cha':^{stat_width}} "
-                     f"BaB "
-                     f"Fort "
-                     f"Ref "
-                     f"Will  "
-                     f"{'Class':<{class_width}} "
-                     f"HD")
+        lines.append(f"  Lvl"
+                     f" {'Str':^{stat_width}}"
+                     f" {'Dex':^{stat_width}}"
+                     f" {'Con':^{stat_width}}"
+                     f" {'Int':^{stat_width}}"
+                     f" {'Wis':^{stat_width}}"
+                     f" {'Cha':^{stat_width}}"
+                     f" BaB"
+                     f" Fort"
+                     f" Ref"
+                     f" Will "
+                     f" {'Class':<{class_width}}"
+                     f" {'HD':<{hd_width}}"
+                     f" Feats")
         if all_levels:
             for lvl in range(1, self.level()+1):
-                lines.append(f"  {lvl:>2}: "
-                             f"{self.bonus('strength', lvl):^{stat_width}} "
-                             f"{self.bonus('dexterity', lvl):^{stat_width}} "
-                             f"{self.bonus('constitution', lvl):^{stat_width}} "
-                             f"{self.bonus('intelligence', lvl):^{stat_width}} "
-                             f"{self.bonus('wisdom', lvl):^{stat_width}} "
-                             f"{self.bonus('charisma', lvl):^{stat_width}} "
-                             f"{self.base_attack_bonus(lvl):^3} "
-                             f"{self.save('fortitude', lvl):^4} "
-                             f"{self.save('reflex', lvl):^4} "
-                             f"{self.save('will', lvl):^4} "
-                             f"{self.classes[lvl-1]:<{class_width}} "
-                             f"{self.hit_die(lvl)}"
+                lines.append(f"  {lvl:>2}:"
+                             f" {self.bonus('strength', lvl):^{stat_width}}"
+                             f" {self.bonus('dexterity', lvl):^{stat_width}}"
+                             f" {self.bonus('constitution', lvl):^{stat_width}}"
+                             f" {self.bonus('intelligence', lvl):^{stat_width}}"
+                             f" {self.bonus('wisdom', lvl):^{stat_width}}"
+                             f" {self.bonus('charisma', lvl):^{stat_width}}"
+                             f" {self.base_attack_bonus(lvl):^3}"
+                             f" {self.save('fortitude', lvl):^4}"
+                             f" {self.save('reflex', lvl):^4}"
+                             f" {self.save('will', lvl):^4}"
+                             f" {self.classes[lvl-1]:<{class_width}}"
+                             f" {self.hit_die(lvl):<{hd_width}}"
+                             f" {self.feats[lvl]}"
                              )
         else:
-            lines.append(f"  {self.level():>2}: "
-                         f"{self.bonus('strength'):^{stat_width}} "
-                         f"{self.bonus('dexterity'):^{stat_width}} "
-                         f"{self.bonus('constitution'):^{stat_width}} "
-                         f"{self.bonus('intelligence'):^{stat_width}} "
-                         f"{self.bonus('wisdom'):^{stat_width}} "
-                         f"{self.bonus('charisma'):^{stat_width}} "
-                         f"{self.base_attack_bonu:^3} "
-                         f"{self.save('fortitude'):^4} "
-                         f"{self.save('reflex'):^4} "
-                         f"{self.save('will'):^4} "
-                         f"{self.classes[-1]:<{class_width}} "
-                         f"{self.hit_die()}"
+            lines.append(f"  {self.level():>2}:"
+                         f" {self.bonus('strength'):^{stat_width}}"
+                         f" {self.bonus('dexterity'):^{stat_width}}"
+                         f" {self.bonus('constitution'):^{stat_width}}"
+                         f" {self.bonus('intelligence'):^{stat_width}}"
+                         f" {self.bonus('wisdom'):^{stat_width}}"
+                         f" {self.bonus('charisma'):^{stat_width}}"
+                         f" {self.base_attack_bonu:^3}"
+                         f" {self.save('fortitude'):^4}"
+                         f" {self.save('reflex'):^4}"
+                         f" {self.save('will'):^4}"
+                         f" {self.classes[-1]:<{class_width}}"
+                         f" {self.hit_die()}"
+                         f" {self.feats[self.level()]}"
                          )
 
         return "\n".join(lines)

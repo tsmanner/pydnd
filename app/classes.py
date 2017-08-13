@@ -6,7 +6,9 @@ __all__ = [
 ]
 
 import math
-from .base import Die, DndBase
+from typing import Optional
+from app.base import Die, DndBase
+from app.feat import Feat
 
 
 class DndClass(DndBase):
@@ -50,10 +52,9 @@ class DndClass(DndBase):
         return math.floor((1/3) * self.level)
 
 
-class PresigeClass(DndClass):
+class PrestigeClass(DndClass):
     def __init__(self, character, level, hit_die, prerequisites = None):
         super().__init__(character, level, hit_die)
-
 
 
 """
@@ -85,13 +86,15 @@ class Wizard(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, character, level):
+    def __init__(self, character, level, feat: Optional[Feat] = None):
         super().__init__(character, level, 4)
+        # if level in [5, 10, 15, 20] and feat is None:
+        #     raise TypeError("Wizard.__init__() takes 3 positional arguments at levels 5, 10, 15 and 20")
         self.attack["base"].append(self.bab_0_5(), "class")
         self.will[0] = (self.save_primary(), "class")
 
 
-class MasterThrower(PresigeClass):
+class MasterThrower(PrestigeClass):
     """ Master Thrower (Complete Warrior)
     Base Attack Bonus: 1/lvl
     Fortitude Save: Secondary (0.33/lvl)
