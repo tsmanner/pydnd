@@ -11,14 +11,21 @@ if __name__ == '__main__':
         "charisma": 6,
     }
 
+    gloves_of_dexterity_2 = DndBase()
+    gloves_of_dexterity_2.dexterity.append(2, "enhancement")
+    periapt_of_wisdom_2 = DndBase()
+    periapt_of_wisdom_2.wisdom.append(2, "enhancement")
+    cloak_of_resistance_1 = DndBase()
+    cloak_of_resistance_1.fortitude.append(1, "enhancement")
+    cloak_of_resistance_1.reflex.append(1, "enhancement")
+    cloak_of_resistance_1.will.append(1, "enhancement")
+
     char = Character(Halfling)  # Base
     char.armor_class.append(-1, "flaw")  # Flaw: Vulnerable
     char.attack["melee"].append(-2, "flaw")  # Flaw: Noncombatant
-    char.dexterity.append(2, "enhancement")  # +2 Gloves of Dexterity
-    char.wisdom.append(2, "enhancement")  # +2 Periapt of Wisdom
-    char.fortitude.append(1, "enhancement")  # +1 Cloak of Resistance
-    char.reflex.append(1, "enhancement")  # +1 Cloak of Resistance
-    char.will.append(1, "enhancement")  # +1 Cloak of Resistance
+    char.equipment.append(gloves_of_dexterity_2)
+    char.equipment.append(periapt_of_wisdom_2)
+    char.equipment.append(cloak_of_resistance_1)
 
     point_blank_shot = Feat("Point Blank Shot", "+1 Attack Bonus and Damage with ranged weapons when within 30'")
     precise_shot = Feat("Precise Shot", "No -4 Attack Bonus penalty for shooting into melee.", [point_blank_shot])

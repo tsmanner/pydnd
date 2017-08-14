@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import reduce
-from typing import DefaultDict, Dict, Type
+from typing import DefaultDict, Dict, List, Type
 from app.base import *
 from app.classes import *
 from app.feat import *
@@ -109,6 +109,7 @@ class Character(DndBase):
         self.feats = defaultdict(list)  # type: DefaultDict[int, Feat]
         self.flaws = defaultdict(list)  # type: DefaultDict[int, Flaw]
         self.race = race()
+        self.equipment = []  # type: List[DndBase]
 
     def level_up(self, dnd_class: Type[DndClass],
                  bonuses: Optional[Dict[str, int]] = None):
@@ -123,7 +124,7 @@ class Character(DndBase):
         return len(self.classes)
 
     def _aspects(self, level: Optional[int] = None):
-        return self.classes.current(level) + [self.level_bonuses[level], self.race]
+        return self.classes.current(level) + [self.level_bonuses[level], self.race] + self.equipment
 
     def hit_die(self, level: Optional[int] = None):
         classes = self.classes.all(level)
