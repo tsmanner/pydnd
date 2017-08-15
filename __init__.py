@@ -11,11 +11,11 @@ if __name__ == '__main__':
         "charisma": 6,
     }
 
-    gloves_of_dexterity_2 = DndBase()
+    gloves_of_dexterity_2 = Equipment("Gloves of Dexterity 2", 4000)
     gloves_of_dexterity_2.dexterity.append(2, "enhancement")
-    periapt_of_wisdom_2 = DndBase()
+    periapt_of_wisdom_2 = Equipment("Periapt of Wisdom 2", 4000)
     periapt_of_wisdom_2.wisdom.append(2, "enhancement")
-    cloak_of_resistance_1 = DndBase()
+    cloak_of_resistance_1 = Equipment("Cloak of Resistance 1", 1000)
     cloak_of_resistance_1.fortitude.append(1, "enhancement")
     cloak_of_resistance_1.reflex.append(1, "enhancement")
     cloak_of_resistance_1.will.append(1, "enhancement")
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     # stats["intelligence"] += 1
     # char.level_up(Wizard, stats)  # Level 20
 
-    print(char.__str__(True))
+    print(char.__str__(verbose=True))

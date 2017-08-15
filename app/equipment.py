@@ -2,4 +2,10 @@ from app.base import DndBase
 
 
 class Equipment(DndBase):
-    pass
+    def __init__(self, name: str, price: int):
+        super().__init__()
+        self.name = name
+        self.price = price
+
+    def __str__(self):
+        return f"{self.name}"

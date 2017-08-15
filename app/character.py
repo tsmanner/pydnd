@@ -170,14 +170,16 @@ class Character(DndBase):
     def will_save(self, level: Optional[int] = None):
         return sum([item.save["will"] for item in self._aspects(level)])
 
-    def __str__(self, all_levels: bool = False):
+    def __str__(self, verbose: bool = False):
         lines = [
             f"Level {self.level()} {self.race} {'/'.join([str(c) for c in self.classes.current()])}",
             f"AC: {self.save('armor_class'):^2}"
         ]
+        if verbose:
+            lines.append(f"Equipped: {', '.join([str(item) for item in self.equipment])}")
         if self.level() == 0:
             return lines[0]
-        if all_levels:
+        if verbose:
             class_width = max([len(str(item)) for item in self.classes])
         else:
             class_width = len(str(self.classes[-1]))
@@ -197,7 +199,7 @@ class Character(DndBase):
                      f" {'Class':<{class_width}}"
                      f" {'HD':<{hd_width}}"
                      f" Feats")
-        if all_levels:
+        if verbose:
             for lvl in range(1, self.level()+1):
                 lines.append(f"  {lvl:>2}:"
                              f" {self.bonus('strength', lvl):^{stat_width}}"
