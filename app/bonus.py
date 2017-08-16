@@ -1,3 +1,7 @@
+__all__ = [
+    "Bonus",
+]
+
 from collections import defaultdict
 from typing import Union, Optional, Iterable
 

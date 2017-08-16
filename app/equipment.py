@@ -1,3 +1,7 @@
+__all__ = [
+    "Equipment",
+]
+
 from app.base import DndBase
 
 

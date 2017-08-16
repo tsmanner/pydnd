@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import reduce
-from typing import DefaultDict, Dict, List, Type
+from typing import DefaultDict, Dict, List, Optional, Type, Union
 from app.base import *
 from app.classes import *
 from app.feat import *

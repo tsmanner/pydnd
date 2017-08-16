@@ -1,3 +1,9 @@
+__all__ = [
+    "DndBase",
+    "Die",
+    "Roll",
+]
+
 from collections import defaultdict
 from random import randint
 
