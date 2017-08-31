@@ -53,8 +53,9 @@ class DndClass(DndBase):
 
 
 class PrestigeClass(DndClass):
-    def __init__(self, character, level, hit_die, prerequisites = None):
+    def __init__(self, character, level, hit_die, prerequisites=None):
         super().__init__(character, level, hit_die)
+        self.prerequisites = prerequisites
 
 
 """

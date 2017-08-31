@@ -54,18 +54,18 @@ class ClassProgression(list):
         3) Increment the level of all subsequent instances of the new class
         """
         old_type = type(super()[key])
-        for item in self[key+1:]:
+        for item in self[key + 1:]:
             if isinstance(item, old_type):
                 item.level -= 1
         super().__setitem__(key, dnd_class(self.class_level(dnd_class, key + 1) + 1))
-        for item in self[key+1:]:
+        for item in self[key + 1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
         self._update_hit_points()
 
     def insert(self, index: int, dnd_class: Type[DndClass]):
         super().insert(index, dnd_class(self.class_level(dnd_class, index + 1) + 1))
-        for item in self[index+1:]:
+        for item in self[index + 1:]:
             if isinstance(item, dnd_class):
                 item.level += 1
         self._update_hit_points()
@@ -107,7 +107,7 @@ class Character(DndBase):
         self.classes = ClassProgression(self)
         self.level_bonuses = BonusProgression(self)
         self.feats = defaultdict(list)  # type: DefaultDict[int, Feat]
-        self.flaws = defaultdict(list)  # type: DefaultDict[int, Flaw]
+        self.flaws = []  # type: List[Flaw]
         self.race = race()
         self.equipment = []  # type: List[DndBase]
 
@@ -124,7 +124,15 @@ class Character(DndBase):
         return len(self.classes)
 
     def _aspects(self, level: Optional[int] = None):
-        return self.classes.current(level) + [self.level_bonuses[level], self.race] + self.equipment
+        if level is not None:
+            feats = reduce(lambda a, b: a + b, [self.feats[k] for k in filter(lambda l: l <= level, self.feats)], [])
+        else:
+            feats = []
+        return self.classes.current(level) + \
+               [self.level_bonuses[level], self.race] + \
+               self.equipment + \
+               feats + \
+               self.flaws
 
     def hit_die(self, level: Optional[int] = None):
         classes = self.classes.all(level)
@@ -183,7 +191,7 @@ class Character(DndBase):
             class_width = max([len(str(item)) for item in self.classes])
         else:
             class_width = len(str(self.classes[-1]))
-        hd_width = max([len(str(self.hit_die(lvl+1))) for lvl in range(self.level())])
+        hd_width = max([len(str(self.hit_die(lvl + 1))) for lvl in range(self.level())])
         stat_width = 6
         lines.append(f"  Lvl"
                      f" {'Str':^{stat_width}}"
@@ -200,7 +208,7 @@ class Character(DndBase):
                      f" {'HD':<{hd_width}}"
                      f" Feats")
         if verbose:
-            for lvl in range(1, self.level()+1):
+            for lvl in range(1, self.level() + 1):
                 lines.append(f"  {lvl:>2}:"
                              f" {self.bonus('strength', lvl):^{stat_width}}"
                              f" {self.bonus('dexterity', lvl):^{stat_width}}"

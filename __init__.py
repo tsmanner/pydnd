@@ -1,4 +1,3 @@
-from functools import partial
 from app import *
 
 if __name__ == '__main__':
@@ -11,60 +10,61 @@ if __name__ == '__main__':
         "charisma": 6,
     }
 
-    gloves_of_dexterity_2 = Equipment("Gloves of Dexterity 2", 4000)
-    gloves_of_dexterity_2.dexterity.append(2, "enhancement")
-    periapt_of_wisdom_2 = Equipment("Periapt of Wisdom 2", 4000)
-    periapt_of_wisdom_2.wisdom.append(2, "enhancement")
-    cloak_of_resistance_1 = Equipment("Cloak of Resistance 1", 1000)
-    cloak_of_resistance_1.fortitude.append(1, "enhancement")
-    cloak_of_resistance_1.reflex.append(1, "enhancement")
-    cloak_of_resistance_1.will.append(1, "enhancement")
-
     char = Character(Halfling)  # Base
-    char.armor_class.append(-1, "flaw")  # Flaw: Vulnerable
-    char.attack["melee"].append(-2, "flaw")  # Flaw: Noncombatant
-    char.equipment.append(gloves_of_dexterity_2)
-    char.equipment.append(periapt_of_wisdom_2)
-    char.equipment.append(cloak_of_resistance_1)
+    char.equipment.append(gloves_of_dexterity(2))
+    char.equipment.append(periapt_of_wisdom(2))
+    char.equipment.append(cloak_of_resistance(1))
 
-    point_blank_shot = Feat("Point Blank Shot", "+1 Attack Bonus and Damage with ranged weapons when within 30'")
-    precise_shot = Feat("Precise Shot", "No -4 Attack Bonus penalty for shooting into melee.", [point_blank_shot])
-    weapon_focus_dart = Feat("Weapon Focus(dart)", "+1 Attack Bonus with darts")
-    noncombatant = Flaw("Noncombatant", "-2 on melee Attack Bonus", precise_shot)
-    vulnerable = Flaw("Vulnerable", "-1 Armor Class", weapon_focus_dart)
-    craven = Feat("Craven", "Add character level to sneak attack damage.")
-    fiery_burst = Feat("Fiery Burst", "Nd6 Fire ball, 5' radius, 30' range.", [])
-    invisible_needle = Feat("Invisible Needle", "Nd4 force darts as thrown weapons.", [])
-
-    char.level_up(Ninja, stats)  # Level 1
+    """ Level 1 """
+    char.level_up(Ninja, stats)
     char.feats[1] = [point_blank_shot]
-    char.flaws[1] = [noncombatant, vulnerable]
-    char.feats[1].extend([precise_shot, weapon_focus_dart])
-    char.level_up(Wizard)  # Level 2
-    char.level_up(Ninja)  # Level 3
+    char.flaws = [noncombatant(precise_shot), vulnerable(weapon_focus("dart"))]
+    char.feats[1].extend([precise_shot, weapon_focus("dart")])
+    """ Level 2 """
+    char.level_up(Wizard)
+    """ Level 3 """
+    char.level_up(Ninja)
     char.feats[3] = [craven]
+    """ Level 4 """
     stats["wisdom"] += 1
-    char.level_up(Wizard, stats)  # Level 4
-    char.level_up(Ninja)  # Level 5
-    char.level_up(Wizard)  # Level 6
+    char.level_up(Wizard, stats)
+    """ Level 5 """
+    char.level_up(Ninja)
+    """ Level 6 """
+    char.level_up(Wizard)
     char.feats[6] = [fiery_burst]
-    char.level_up(Ninja)  # Level 7
+    """ Level 7 """
+    char.level_up(Ninja)
+    """ Level 8 """
     stats["intelligence"] += 1
-    char.level_up(Wizard, stats)  # Level 8
-    char.level_up(Wizard)  # partial(Wizard, feat=invisible_needle))  # Level 9
+    char.level_up(Wizard, stats)
+    """ Level 9 """
+    char.level_up(Wizard)  # partial(Wizard, feat=invisible_needle))
     char.feats[9] = [invisible_needle]
+    """ Level 10 """
     # char.level_up(MasterThrower)  # Level 10
+    """ Level 11 """
     # char.level_up(Ninja)  # Level 11
+    """ Level 12 """
     # stats["intelligence"] += 1
     # char.level_up(Ninja, stats)  # Level 12
+    # char.feats[12]
+    """ Level 13 """
     # char.level_up(Wizard)  # Level 13
+    """ Level 14 """
     # char.level_up(Wizard)  # Level 14
+    """ Level 15 """
     # char.level_up(Ninja)  # Level 15
+    """ Level 16 """
     # stats["intelligence"] += 1
     # char.level_up(Wizard, stats)  # Level 16
+    """ Level 17 """
     # char.level_up(Ninja)  # Level 17
+    """ Level 18 """
     # char.level_up(Wizard)  # Level 18
+    """ Level 19 """
     # char.level_up(Ninja)  # Level 19
+    """ Level 20 """
     # stats["intelligence"] += 1
     # char.level_up(Wizard, stats)  # Level 20
 
