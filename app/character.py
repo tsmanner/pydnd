@@ -178,9 +178,12 @@ class Character(DndBase):
     def will_save(self, level: Optional[int] = None):
         return sum([item.save["will"] for item in self._aspects(level)])
 
+    def summary(self):
+        return f"Level {self.level()} {self.race} {'/'.join([str(c) for c in self.classes.current()])}"
+
     def __str__(self, verbose: bool = False):
         lines = [
-            f"Level {self.level()} {self.race} {'/'.join([str(c) for c in self.classes.current()])}",
+            self.summary(),
             f"AC: {self.save('armor_class'):^2}"
         ]
         if verbose:

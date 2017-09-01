@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Level {{ char.level() }} {{ char.race.__str__() }}</title>
+    <link rel="stylesheet" href="{{ styles_url }}">
+</head>
+<body>
+{% for line in char.__str__(verbose=True).split("\n") %}
+    <p class="normal">{{ line }}</p>
+{% endfor %}
+</body>
+</html>
