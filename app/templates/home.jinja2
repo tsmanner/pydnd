@@ -5,8 +5,10 @@
     <link rel="stylesheet" href="{{ styles_url }}">
 </head>
 <body>
+<table style="width:100%">
 {% for line in char.__str__(verbose=True).split("\n") %}
     <p class="normal">{{ line }}</p>
 {% endfor %}
+</table>
 </body>
 </html>
