@@ -45,5 +45,6 @@ def periapt_of_wisdom(n: int):
     periapt.wisdom.append(n, "enhancement")
     return periapt
 
+
 ring_of_ua_reduce_person_1_str = Equipment("Ring of Use Activated Reduce Person and +1 Strength", 5500)
 ring_of_ua_reduce_person_1_str.strength.append(1, "enhancement")
