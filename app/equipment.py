@@ -3,6 +3,7 @@ __all__ = [
     "cloak_of_resistance",
     "gloves_of_dexterity",
     "periapt_of_wisdom",
+    "ring_of_ua_reduce_person_1_str",
 ]
 
 from functools import lru_cache
@@ -43,3 +44,6 @@ def periapt_of_wisdom(n: int):
     periapt = Equipment(f"Periapt of Wisdom +{n}", 1000 * (n**2))
     periapt.wisdom.append(n, "enhancement")
     return periapt
+
+ring_of_ua_reduce_person_1_str = Equipment("Ring of Use Activated Reduce Person and +1 Strength", 5500)
+ring_of_ua_reduce_person_1_str.strength.append(1, "enhancement")

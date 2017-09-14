@@ -14,6 +14,7 @@ if __name__ == '__main__':
     char.equipment.append(gloves_of_dexterity(2))
     char.equipment.append(periapt_of_wisdom(2))
     char.equipment.append(cloak_of_resistance(1))
+    char.equipment.append(ring_of_ua_reduce_person_1_str)
 
     """ Level 1 """
     char.level_up(Ninja, stats)
