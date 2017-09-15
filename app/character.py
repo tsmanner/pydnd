@@ -7,89 +7,23 @@ from app.feat import *
 from app.races import *
 
 
-class BonusProgression:
-    def __init__(self, character: "Character"):
-        self._bonuses = {}
-        self.character = character
-
-    def __getitem__(self, level: Union[int, None]):
-        if level is None:
-            level = self.character.level()
-        key = level - 1
-        filtered = list(filter(lambda k: k <= key, self._bonuses.keys()))
-        if len(filtered) > 0:
-            return self._bonuses[max(filtered)]
-        self._bonuses[level] = DndBase()
-        return self._bonuses[level]
-
-    def __setitem__(self, level: int, value: DndBase):
-        key = level - 1
-        self._bonuses[key] = value
-
-
-class ClassProgression(list):
-    def __init__(self, character: "Character"):
+class CharacterLevel(DndBase):
+    def __init__(self, character: "Character", dnd_class: Type[DndClass]):
         super().__init__()
         self.character = character
+        self.armor_class.append(10, "base")
+        self.feats = []  # type: List[Feat]
+        self.flaws = []  # type: List[Flaw]
+        self.dnd_class = dnd_class
 
-    def _update_hit_points(self):
-        if len(self) > 0:
-            self[0].hit_points = self[0].hit_die.sides
-        for dcls in self[1:]:  # type: DndClass
-            dcls.hit_points = dcls.hit_die.roll
+    def _aspects(self):
+        feats = reduce(lambda a, b: a + b.feats, self.character.levels[0:self.level], [])
+        flaws = reduce(lambda a, b: a + b.flaws, self.character.levels[0:self.level], [])
+        return [self, self.dnd_class(self, self.level)] + feats + flaws
 
-    def class_level(self, dnd_class: Type[DndClass], character_level: Optional[int] = None):
-        if character_level is None:
-            return len(list(filter(lambda dc: isinstance(dc, dnd_class), self)))
-        return len(list(filter(lambda dc: isinstance(dc, dnd_class), self[:character_level])))
-
-    def append(self, dnd_class: Type[DndClass], **kwargs):
-        super().append(dnd_class(self.character, self.class_level(dnd_class) + 1, **kwargs))
-        self._update_hit_points()
-
-    def __setitem__(self, key: int, dnd_class: Type[DndClass]):
-        """ Replace a character level with a different class.
-        1) Decrement the level of all subsequent instances of the old class
-        2) Insert the new class instance
-        3) Increment the level of all subsequent instances of the new class
-        """
-        old_type = type(super()[key])
-        for item in self[key + 1:]:
-            if isinstance(item, old_type):
-                item.level -= 1
-        super().__setitem__(key, dnd_class(self.class_level(dnd_class, key + 1) + 1))
-        for item in self[key + 1:]:
-            if isinstance(item, dnd_class):
-                item.level += 1
-        self._update_hit_points()
-
-    def insert(self, index: int, dnd_class: Type[DndClass]):
-        super().insert(index, dnd_class(self.class_level(dnd_class, index + 1) + 1))
-        for item in self[index + 1:]:
-            if isinstance(item, dnd_class):
-                item.level += 1
-        self._update_hit_points()
-
-    def all(self, character_level: Optional[int] = None):
-        if character_level is None:
-            return self
-        return self[:character_level]
-
-    def current(self, character_level: Optional[int] = None):
-        cur = {}
-        for cls in self.all(character_level):
-            cur[cls.__class__.__name__] = cls
-        return list(cur.values())
-
-    def __str__(self):
-        return "\n".join([f"  Lvl BaB Fort Ref Will Class"] +
-                         [f"  {i+1:>2}: "
-                          f"{dcls.base_attack_bonus:^3} "
-                          f"{dcls.fortitude_save:^4} "
-                          f"{dcls.reflex_save:^3} "
-                          f"{dcls.will_save:^4} "
-                          f"{dcls}"
-                          for i, dcls in enumerate(self)])
+    @property
+    def level(self):
+        return self.character.levels.index(self) + 1
 
 
 class Character(DndBase):
@@ -103,20 +37,22 @@ class Character(DndBase):
 
     def __init__(self, race: Type[Race]):
         super().__init__()
-        self.armor_class.append(10, "base")
-        self.classes = ClassProgression(self)
-        self.level_bonuses = BonusProgression(self)
-        self.feats = defaultdict(list)  # type: DefaultDict[int, Feat]
-        self.flaws = []  # type: List[Flaw]
+        # self.armor_class.append(10, "base")
+        self.levels = []  # type: List[CharacterLevel]
+        # self.classes = ClassProgression(self)
+        # self.level_bonuses = BonusProgression(self)
+        # self.feats = defaultdict(list)  # type: DefaultDict[int, Feat]
+        # self.flaws = []  # type: List[Flaw]
         self.race = race()
         self.equipment = []  # type: List[DndBase]
 
     def level_up(self, dnd_class: Type[DndClass],
                  bonuses: Optional[Dict[str, int]] = None):
-        self.classes.append(dnd_class)
-        if bonuses is not None:
-            self.level_bonuses[self.level()] = DndBase()
-            [self.level_bonuses[self.level()].__getattribute__(k).append(bonuses[k], "level") for k in bonuses]
+        self.levels.append(CharacterLevel(self, dnd_class))
+        # self.classes.append(dnd_class)
+        # if bonuses is not None:
+        #     self.level_bonuses[self.level()] = DndBase()
+        #     [self.level_bonuses[self.level()].__getattribute__(k).append(bonuses[k], "level") for k in bonuses]
 
     def level(self, dnd_class: Optional[Type[DndClass]] = None):
         if dnd_class is not None:

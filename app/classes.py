@@ -6,9 +6,48 @@ __all__ = [
 ]
 
 import math
-from typing import Optional
 from app.base import Die, DndBase
-from app.feat import Feat
+
+"""
+Utility functions
+    Base Attack Bonus Progressions
+        bab_1: +1 per level
+        bab_0_75: +3 per 4 levels (0.75/lvl)
+        bab_0_5: +1 per 2 levels (0.5/lvl)
+    Saving Throw Progressions
+        save_primary: 2 +1 per 2 levels (2 + 0.5/lvl)
+        save_secondary: 0 +1 per 3 levels (0.33/lvl
+"""
+
+
+def bab_1(level):
+    return level
+
+
+def bab_0_75(level):
+    return math.floor((3/4) * level)
+
+
+def bab_0_5(level):
+    return math.floor((1/2) * level)
+
+
+def save_primary(level):
+    return 2 + math.floor((1/2) * level)
+
+
+def save_secondary(level):
+    return math.floor((1/3) * level)
+
+
+"""
+DndBase
+    DndClass
+        Ninja
+        Wizard
+    PrestigeClass
+        MasterThrower
+"""
 
 
 class DndClass(DndBase):
@@ -17,39 +56,13 @@ class DndClass(DndBase):
         self.character = character
         self.level = level
         self.hit_die = Die(hit_die)
-        self.hit_points = self.hit_die.roll
-        self.fortitude.append(self.save_secondary(), "class")
-        self.reflex.append(self.save_secondary(), "class")
-        self.will.append(self.save_secondary(), "class")
+        self.hit_points = self.hit_die.roll()
+        self.fortitude.append(save_secondary(level), "class")
+        self.reflex.append(save_secondary(level), "class")
+        self.will.append(save_secondary(level), "class")
 
     def __str__(self):
         return f"{self.__class__.__name__}{self.level}"
-
-    """
-    Utility functions
-        Base Attack Bonus Progressions
-            bab_1: +1 per level
-            bab_0_75: +3 per 4 levels (0.75/lvl)
-            bab_0_5: +1 per 2 levels (0.5/lvl)
-        Saving Throw Progressions
-            save_primary: 2 +1 per 2 levels (2 + 0.5/lvl)
-            save_secondary: 0 +1 per 3 levels (0.33/lvl
-    """
-
-    def bab_1(self):
-        return self.level
-
-    def bab_0_75(self):
-        return math.floor((3/4) * self.level)
-
-    def bab_0_5(self):
-        return math.floor((1/2) * self.level)
-
-    def save_primary(self):
-        return 2 + math.floor((1/2) * self.level)
-
-    def save_secondary(self):
-        return math.floor((1/3) * self.level)
 
 
 class PrestigeClass(DndClass):
@@ -76,8 +89,8 @@ class Ninja(DndClass):
         # TODO:   Refactor everything so a "Player" has a "Character" list which shows increments?
         # TODO:   Let AC etc be "global" and print them as part of the header?
         self.character.armor_class.append(int(character.bonus("wisdom")) + (level // 5), "ninja")
-        self.attack["base"].append(self.bab_0_75(), "class")
-        self.will[0] = (self.save_primary(), "class")
+        self.attack["base"].append(bab_0_75(level), "class")
+        self.will[0] = (save_primary(level), "class")
 
 
 class Wizard(DndClass):
@@ -87,12 +100,10 @@ class Wizard(DndClass):
     Reflex Save: Secondary (0.33/lvl)
     Will Save: Primary (2 + 0.5/lvl)
     """
-    def __init__(self, character, level, feat: Optional[Feat] = None):
+    def __init__(self, character, level):
         super().__init__(character, level, 4)
-        # if level in [5, 10, 15, 20] and feat is None:
-        #     raise TypeError("Wizard.__init__() takes 3 positional arguments at levels 5, 10, 15 and 20")
-        self.attack["base"].append(self.bab_0_5(), "class")
-        self.will[0] = (self.save_primary(), "class")
+        self.attack["base"].append(bab_0_5(level), "class")
+        self.will[0] = (save_primary(level), "class")
 
 
 class MasterThrower(PrestigeClass):
@@ -104,5 +115,5 @@ class MasterThrower(PrestigeClass):
     """
     def __init__(self, character, level):
         super().__init__(character, level, 8)
-        self.attack["base"].append(self.bab_0_5(), "class")
-        self.reflex[0] = (self.save_primary(), "class")
+        self.attack["base"].append(bab_0_5(level), "class")
+        self.reflex[0] = (save_primary(level), "class")
