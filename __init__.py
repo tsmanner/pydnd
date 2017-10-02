@@ -1,5 +1,7 @@
 import pandas as pd
 
+import app.base
+
 
 def rogue():
     levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -34,16 +36,14 @@ def rogue():
 
 
 def arcane_trickster():
-    levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-    cantrips = [None, None, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
-    spells_known = [None, None, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13]
-    slots_1 = [None, None, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
-    slots_2 = [None, None, None, None, None, None, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
-    slots_3 = [None, None, None, None, None, None, None, None, None, None, None, None, 2, 2, 2, 3, 3, 3, 3, 3]
-    slots_4 = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 1, 1]
+    levels = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    cantrips = [3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    spells_known = [3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13]
+    slots_1 = [2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    slots_2 = [None, None, None, None, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    slots_3 = [None, None, None, None, None, None, None, None, None, None, 2, 2, 2, 3, 3, 3, 3, 3]
+    slots_4 = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 1, 1]
     features = [
-        [],
-        [],
         ["Mage Hand Legerdemain"],
         [],
         [],
@@ -76,7 +76,9 @@ def arcane_trickster():
 if __name__ == '__main__':
     r = rogue()
     at = arcane_trickster()
-    char = r.join(at, rsuffix="_r", how="outer")
-    char["features"] = char["features"] + char["features_r"]
-    char = char.drop(["features_r"], axis=1)
-    print(char)
+    char = app.base.merge(r, at)
+    # print(char)
+    for level in char.index:
+        row = char.loc[level]
+        # print(row["features"])
+        print(level, " ".join([str(row[col]) for col in char.columns]))

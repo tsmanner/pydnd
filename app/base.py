@@ -1,102 +1,40 @@
-__all__ = [
-    "DndBase",
-    "Die",
-    "Roll",
-]
-
-from collections import defaultdict
-from random import randint
-
-from typing import Iterable, Optional, Union
-
-from app.bonus import AttackBonus, AbilityBonus, Bonus
+import numpy
+import pandas as pd
 
 
-class DndBase:
-    Abilities = {
-        "strength",
-        "dexterity",
-        "constitution",
-        "intelligence",
-        "wisdom",
-        "charisma",
-    }
-
-    def __init__(self):
-        self.attack = AttackBonus()
-
-    def __format__(self, format_spec):
-        return str(self).__format__(format_spec)
-
-    def __getattribute__(self, item):
-        try:
-            return super().__getattribute__(item)
-        except AttributeError:
-            if item in DndBase.Abilities:
-                self.__setattr__(item, AbilityBonus())
-            else:
-                self.__setattr__(item, Bonus())
-            return super().__getattribute__(item)
+def expand_index(df: pd.DataFrame, start: int, stop: int) -> pd.DataFrame:
+    """
+    Takes a DataFrame and fills in any holes between start and stop, inclusive,
+        in the index with default values.
+    :param df: DataFrame to fill in
+    :param start: Beginning of the index range
+    :param stop: End of the index range
+    :return: New DataFrame that is a copy of `df` with the filled in rows
+    """
+    nan_types = {int, float, numpy.int64, numpy.float64}
+    populated = set(df.index)
+    unpopulated = [i for i in range(start, stop+1) if i not in populated]
+    types = [type(df[col][df[col].index[0]]) for col in df.columns]
+    data = [[numpy.NaN if t in nan_types else t() for t in types] for i in unpopulated]
+    new_df = pd.DataFrame(data=data, columns=df.columns, index=unpopulated)
+    new_df = pd.concat([df, new_df]).sort_index()
+    return new_df
 
 
-class Die:
-    def __init__(self, sides: int):
-        self.sides = sides
-
-    def roll(self):
-        return randint(0, self.sides) + 1
-
-    def __add__(self, other):
-        if isinstance(other, int):
-            return other + self.roll()
-
-    def __radd__(self, other):
-        if isinstance(other, int):
-            return other + self.roll()
-
-    def __lt__(self, other: "Die"):
-        return self.sides < other.sides
-
-    def __eq__(self, other: "Die"):
-        return self.sides == other.sides
-
-    def __str__(self):
-        return f"d{self.sides}"
-
-
-class Roll(list):
-    def __init__(self, iterable: Optional[Iterable[Union[int, Die]]] = None):
-        super().__init__()
-        if iterable is not None:
-            [self.append(item) for item in iterable]
-
-    def append(self, item: Die):
-        if not (isinstance(item, int) or isinstance(item, Die)):
-            raise TypeError(f"unsupported type for Roll.append: '{item.__class__.__name__}'")
-        super().append(item)
-
-    def insert(self, index: int, item: Die):
-        if not (isinstance(item, int) or isinstance(item, Die)):
-            raise TypeError(f"unsupported type for Roll.insert: '{item.__class__.__name__}'")
-        super().insert(index, item)
-
-    def roll(self):
-        return sum(self)
-
-    def __setitem__(self, key: int, value: Die):
-        if not (isinstance(value, int) or isinstance(value, Die)):
-            raise TypeError(f"unsupported type for Roll.insert: '{value.__class__.__name__}'")
-        super().__setitem__(key, value)
-
-    def __format__(self, format_spec):
-        return str(self).__format__(format_spec)
-
-    def __str__(self):
-        base = 0
-        d_counts = defaultdict(int)
-        for item in self:  # type: Die
-            if isinstance(item, int):
-                base += item
-            else:
-                d_counts[item.sides] += 1
-        return "+".join([f"{base}"] + [f"{d_counts[k]}d{k}" for k in d_counts])
+def merge(df1: pd.DataFrame, df2: pd.DataFrame):
+    """
+    Merges two DataFrames into a new one by summing the contents of overlapping cells.
+    :param df1: The left hand DataFrame
+    :param df2: The right hand DataFrame
+    :return: The merged DataFrame
+    """
+    idxs = set(df1.index.values) | set(df2.index.values)
+    # df1 = expand_index(df1, min(idxs), max(idxs))
+    df2 = expand_index(df2, min(idxs), max(idxs))
+    rsuffix = "_df2"
+    merged = df1.join(df2, rsuffix=rsuffix, how="outer")
+    merge_columns = [col for col in set(df1.columns.values) & set(df2.columns.values)]
+    for col in merge_columns:
+        merged[col] = merged[col] + merged[f"{col}{rsuffix}"]
+        merged = merged.drop([f"{col}{rsuffix}"], axis=1)
+    return merged
