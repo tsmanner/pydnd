@@ -3,9 +3,15 @@ import pandas as pd
 import app.base
 
 
-def rogue():
+def character():
     levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     proficiency = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+    return pd.DataFrame(data={"proficiency": proficiency},
+                        index=levels)
+
+
+def rogue():
+    levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     sneak_dice = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10]
     features = [
         ["Expertise", "Sneak Attack", "Thieves' Cant"],
@@ -29,8 +35,7 @@ def rogue():
         ["Ability Score"],
         ["Stroke of Luck"],
     ]
-    return pd.DataFrame(data={"proficiency": proficiency,
-                              "sneak_dice": sneak_dice,
+    return pd.DataFrame(data={"sneak_dice": sneak_dice,
                               "features": features},
                         index=levels)
 
@@ -74,11 +79,11 @@ def arcane_trickster():
 
 
 if __name__ == '__main__':
+    c = character()
     r = rogue()
     at = arcane_trickster()
-    char = app.base.merge(r, at)
-    # print(char)
-    for level in char.index:
-        row = char.loc[level]
-        # print(row["features"])
-        print(level, " ".join([str(row[col]) for col in char.columns]))
+    char = app.base.merge(c, r, at)
+    print(char)
+    # for level in char.index:
+    #     row = char.loc[level]
+    #     print(level, " ".join([str(row[col]) for col in char.columns]))

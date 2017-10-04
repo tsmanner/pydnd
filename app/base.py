@@ -21,20 +21,21 @@ def expand_index(df: pd.DataFrame, start: int, stop: int) -> pd.DataFrame:
     return new_df
 
 
-def merge(df1: pd.DataFrame, df2: pd.DataFrame):
+def merge(df1: pd.DataFrame, *args):
     """
     Merges two DataFrames into a new one by summing the contents of overlapping cells.
     :param df1: The left hand DataFrame
-    :param df2: The right hand DataFrame
+    :param args: A list of DataFrames to use as the right hand side
     :return: The merged DataFrame
     """
-    idxs = set(df1.index.values) | set(df2.index.values)
-    # df1 = expand_index(df1, min(idxs), max(idxs))
-    df2 = expand_index(df2, min(idxs), max(idxs))
-    rsuffix = "_df2"
-    merged = df1.join(df2, rsuffix=rsuffix, how="outer")
-    merge_columns = [col for col in set(df1.columns.values) & set(df2.columns.values)]
-    for col in merge_columns:
-        merged[col] = merged[col] + merged[f"{col}{rsuffix}"]
-        merged = merged.drop([f"{col}{rsuffix}"], axis=1)
-    return merged
+    for df2 in args:
+        idxs = set(df1.index.values) | set(df2.index.values)
+        df2 = expand_index(df2, min(idxs), max(idxs))
+        rsuffix = "_df2"
+        merged = df1.join(df2, rsuffix=rsuffix, how="outer")
+        merge_columns = [col for col in set(df1.columns.values) & set(df2.columns.values)]
+        for col in merge_columns:
+            merged[col] = merged[col] + merged[f"{col}{rsuffix}"]
+            merged = merged.drop([f"{col}{rsuffix}"], axis=1)
+        df1 = merged
+    return df1
