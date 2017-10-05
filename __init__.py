@@ -82,8 +82,5 @@ if __name__ == '__main__':
     c = character()
     r = rogue()
     at = arcane_trickster()
-    char = app.base.merge(c, r, at)
+    char = app.base.merge(c, r, at, propagate="forward")
     print(char)
-    # for level in char.index:
-    #     row = char.loc[level]
-    #     print(level, " ".join([str(row[col]) for col in char.columns]))
