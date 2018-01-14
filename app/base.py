@@ -27,13 +27,18 @@ def expand_index(df: pd.DataFrame, start: int, stop: int, propagate: Optional[st
             data.append([numpy.NaN if t in nan_types else t() for t in types])
         elif propagate == "forward":
             last_pop = filter(lambda x: x < i, populated)
-            print(populated, i, [p for p in last_pop])
-            data.append(df.loc[max(last_pop)])
+            if len(list(last_pop)) > 0:
+                data.append(df.loc[max(last_pop)])
+            else:
+                data.append([numpy.NaN if t in nan_types else t() for t in types])
         elif propagate == "backward":
             next_pop = filter(lambda x: x > i, populated)
-            data.append(df.loc[max(next_pop)])
+            if len(list(next_pop)) > 0:
+                data.append(df.loc[max(next_pop)])
+            else:
+                data.append([numpy.NaN if t in nan_types else t() for t in types])
     new_df = pd.DataFrame(data=data, columns=df.columns, index=unpopulated)
-    new_df = pd.concat([df, new_df]).sort_index()
+    new_df = pd.concat([df, new_df]).sort_index()  # type: pd.DataFrame
     return new_df
 
 
