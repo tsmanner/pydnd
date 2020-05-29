@@ -106,6 +106,7 @@ the_party.location = city.town_hall
 marans_caravan.location = city.market
 
 
+# The party takes their first job
 job_taken = Passage(name="First Job", prev=arrival, location=city.town_hall, body="""
 Two other members of the roughly ten person caravan escort. The first is a tall slender man wearing a full length
 robe and and carrying a pouch around his neck, a small pack, and an ornate jeweled dagger on his hip. The second is
