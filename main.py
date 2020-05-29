@@ -2,49 +2,10 @@ import contextlib
 import curses
 import enum
 import json
-import os
 import types
-import string
 import sys
 import textwrap
-import typing
 from world import *
-
-
-
-if not os.path.exists("campaign.json"):
-    world = Location(name="The World")
-    continent = Location(name="The Continent", location=world)
-    kingdom = Location(name="The Kingdom", location=continent)
-    city = Location(name="The City", location=kingdom)
-    tavern1 = Location(name="Tavern 1", location=city, description=Passage(name="Description", body="The first tavern in {city:0}"))
-    tavern1.description.city = city
-    tavern2 = Location(name="Tavern 2", location=city, description=Passage(name="Description", body="The second tavern in {city:0}"))
-    tavern2.description.city = city
-    town_hall = Location(name="Town Hall", location=city, description=Passage(name="Description", body="The Town Hall of {city:0}"))
-    town_hall.description.city = city
-
-    arrival = Passage(name="Arrival in {location:0}", location=city, body="""
-The party arrives in {location:1} by way of a {tribe} caravan under the guidance of {caravan_leader}.
-
-They do stuff.
-    """)
-    arrival.tribe = "Go'Val"
-    arrival.caravan_leader = "Maran"
-
-#     job_taken = Passage(name="Job Taken in {location:0}", location=city, body="""
-# After traveling to {town_hall:0} to 
-#     """)
-#     job_taken.town_hall = town_hall
-
-    with open("campaign.json", "w") as fl:
-        json.dump(
-            {
-                "name": "The Campaign",
-                "objects": to_json(arrival, city),
-            },
-            fl,
-        )
 
 
 class PartialProxy:
