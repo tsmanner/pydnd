@@ -1,2 +1,3 @@
-from .location import Locatable, Location, Passage
-from .world_object import to_json, WorldObject
+from .location import Locatable, NamedLocatable, Location, Passage
+from .world_object import WorldObject
+from .json_serializer import to_json, from_json

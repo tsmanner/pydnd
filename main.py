@@ -1,8 +1,15 @@
+import contextlib
 import curses
+import enum
 import json
 import os
+import types
 import string
+import sys
+import textwrap
+import typing
 from world import *
+
 
 
 if not os.path.exists("campaign.json"):
@@ -10,105 +17,397 @@ if not os.path.exists("campaign.json"):
     continent = Location(name="The Continent", location=world)
     kingdom = Location(name="The Kingdom", location=continent)
     city = Location(name="The City", location=kingdom)
-    tavern = Location(name="The Tavern", location=city)
+    tavern1 = Location(name="Tavern 1", location=city, description=Passage(name="Description", body="The first tavern in {city:0}"))
+    tavern1.description.city = city
+    tavern2 = Location(name="Tavern 2", location=city, description=Passage(name="Description", body="The second tavern in {city:0}"))
+    tavern2.description.city = city
+    town_hall = Location(name="Town Hall", location=city, description=Passage(name="Description", body="The Town Hall of {city:0}"))
+    town_hall.description.city = city
 
-    arrival = Passage(location=city, body="""
+    arrival = Passage(name="Arrival in {location:0}", location=city, body="""
 The party arrives in {location:1} by way of a {tribe} caravan under the guidance of {caravan_leader}.
+
+They do stuff.
     """)
     arrival.tribe = "Go'Val"
     arrival.caravan_leader = "Maran"
 
+#     job_taken = Passage(name="Job Taken in {location:0}", location=city, body="""
+# After traveling to {town_hall:0} to 
+#     """)
+#     job_taken.town_hall = town_hall
+
     with open("campaign.json", "w") as fl:
-        json.dump(to_json(arrival, tavern), fl)
+        json.dump(
+            {
+                "name": "The Campaign",
+                "objects": to_json(arrival, city),
+            },
+            fl,
+        )
+
+
+class PartialProxy:
+    def __init__(self, proxied_object):
+        super().__init__()
+        super().__setattr__("_proxy_started", False)
+        super().__setattr__("proxied_object", proxied_object)
+
+    @contextlib.contextmanager
+    def pause_proxy(self):
+        self.proxy_stop()
+        try:
+            yield None
+        finally:
+            self.proxy_start()
+
+    def proxy_start(self):
+        self._proxy_started = True
+
+    def proxy_stop(self):
+        self._proxy_started = False
+
+    def _hasattribute(self, name):
+        try:
+            self.__getattribute__(name)
+        except AttributeError:
+            return False
+        return True
+
+    def __setattr__(self, name, value):
+        # Pass through all things not explicitely defined
+        if self._hasattribute(name) or not self._proxy_started:
+            super().__setattr__(name, value)
+        else:
+            setattr(self.proxied_object, name, value)
+
+    def __getattr__(self, name):
+        # Pass through all things not explicitely defined
+        return getattr(self.proxied_object, name)
+
+    def __getitem__(self, *args, **kwargs):
+        return self.proxied_object.__getitem__(*args, **kwargs)
+
+    def __setitem__(self, *args, **kwargs):
+        return self.proxied_object.__setitem__(*args, **kwargs)
+
+    def __repr__(self):
+        return f"Proxy<{str(self.proxied_object)}>"
+
+
+class Pane(PartialProxy):
+    def __init__(self, screen_position, pad_size, pad_viewport_size=None, pad_viewport_top_left=(0, 0), border_args=(), status_pane=None):
+        super().__init__(curses.newpad(*pad_size))
+        with self.pause_proxy():
+            self.screen_position = (screen_position[0]+1, screen_position[1]+1)
+            self._border_win = curses.newwin(*pad_viewport_size, *screen_position)
+            self.pad_size = (pad_size[0]-2, pad_size[1]-2)
+            self.pad_viewport_size = pad_viewport_size if pad_viewport_size is not None else self.pad_size
+            self.pad_viewport_top_left = pad_viewport_top_left
+            self.border_args = border_args
+            self.status_pane = status_pane
+
+    @property
+    def height(self):
+        return self.pad_viewport_size[0]
+
+    def border(self):
+        self._border_win.border(*self.border_args)
+        self._border_win.refresh()
+
+    @property
+    def bottom_right(self):
+        return (
+            self.screen_position[0] + self.pad_viewport_size[0] - 3,
+            self.screen_position[1] + self.pad_viewport_size[1] - 3,
+        )
+
+    def refresh(self):
+        self.border()
+        self.proxied_object.refresh(
+            *self.pad_viewport_top_left,  # Pane coordinate of viewport top left
+            *self.screen_position,        # Screen coordinate to place Pane top left
+            *self.bottom_right,           # Screen coordinate to place Pane bottom right
+        )
+
+
+class ScrollDirection(enum.Enum):
+    UP = enum.auto()
+    DOWN = enum.auto()
+
+
+class ScrollablePane(Pane):
+    def up(self):
+        if self.pad_viewport_top_left[0] > 1:
+            self.pad_viewport_top_left = (self.pad_viewport_top_left[0] - 1, 0)
+        self.refresh()
+
+    def down(self):
+        if (self.pad_viewport_top_left[0] - 1 + self.height) < self.pad_size[0]:
+            self.pad_viewport_top_left = (self.pad_viewport_top_left[0] + 1, 0)
+        self.refresh()
+
+
+class TextPane(ScrollablePane):
+    def __init__(self, default_message, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        with self.pause_proxy():
+            self.default_message = default_message
+
+    def __call__(self, message=None):
+        self.clear()
+        if message is None:
+            if callable(self.default_message):
+                message = self.default_message()
+            else:
+                message = self.default_message
+        if isinstance(message, str):
+            self.addstr(0, 1, message)
+        else:
+            for i, line in enumerate(message):
+                if i == (self.pad_size[0]):
+                    break
+                self.addstr(i, 2, line)
+        self.border()
+        self.refresh()
+
+
+class MenuPane(ScrollablePane):
+    def __init__(self, data, *args, renderer=lambda i, d: str(d), **kwargs):
+        super().__init__(*args, **kwargs)
+        with self.pause_proxy():
+            self._selected_index = 0
+            self.data = data
+            self.renderer = renderer
+
+    def set_data(self, data, renderer=None):
+        self.clear()
+        self.border()
+        if renderer:
+            self.renderer = renderer
+        self.data = data
+        for i, d in enumerate(self.data):
+            self.addstr(i, 1, self.renderer(i, d))
+        self._selected_index = 0
+        self.pad_viewport_top_left = (0, 0)
+        self.refresh()
+
+    def refresh(self):
+        self.move(self.selected_index, 1)
+        super().refresh()
+
+    def up(self):
+        self._update_selected_index(ScrollDirection.UP)
+
+    def down(self):
+        self._update_selected_index(ScrollDirection.DOWN)
+
+    def _update_selected_index(self, direction: ScrollDirection):
+        if direction is ScrollDirection.UP:
+            if self._selected_index > 0:
+                self._selected_index -= 1
+            if self._selected_index != 0 and self._selected_index == (self.pad_viewport_top_left[0]):
+                self.pad_viewport_top_left = (self.pad_viewport_top_left[0] - 1, 0)
+        elif direction is ScrollDirection.DOWN:
+            if self._selected_index < (len(self.data) - 1):
+                self._selected_index += 1
+            if self._selected_index != len(self.data) - 1 and self._selected_index == (self.pad_viewport_top_left[0] - 1 + self.height):
+                self.pad_viewport_top_left = (self.pad_viewport_top_left[0] + 1, 0)
+        self.refresh()
+
+    @property
+    def selected_index(self):
+        return self._selected_index
+
+    @property
+    def selected(self):
+        return self.data[self.selected_index]
 
 
 class UI:
-    def __init__(self, screen=None):
+    def __init__(self, screen, filename):
         self.screen = screen
-        self.objects = WorldObject._extract_objects_from_json(json.load(open("campaign.json")))
-        self._current_object = Location(name="The Universe")
-        for root in list(sorted(filter(lambda o: o.location is None, self.objects.values()), key=lambda o: o.object_id)):
-            self.current_object.add_child_locatable(root)
-        self._locations = list(filter(lambda o: isinstance(o, Location), self.current_object._child_locatables))
-        self.current_object_pad = None
-        self.locations_pad = None
-        self.story_pad = None
+        json_data = json.load(open(filename))
+        self.objects = from_json(json_data["objects"])
+        campaign = Location(name=json_data["name"])
+        for root in filter(lambda o: o.location is None, self.objects.values()):
+            root.location = campaign
+        self._current_object = campaign
+        self.current_object_pane = None
+        self.locations_pane = None
+        self.story_pane = None
+        self.status_pane = None
         if self.screen:
             self.init_screen()
             self.main()
-        # else:
-        #     [print(o) for o in self.objects.values()]
-        #     print(self.current_object)
-        #     [print(o) for o in self.current_object._child_locatables]
+        else:
+            self.current_object = self.current_object._child_locatables[0]
+            print(self.current_object)
+            print("  self.locations")
+            [print(f"    {o}") for o in self.locations]
+            print("  self.current_object._child_locatables")
+            [print(f"    {o}") for o in self.current_object._child_locatables]
+            print("All Objects:")
+            for o in self.objects.values():
+                print(o)
+                if o.description is not None:
+                    print(f"    {o.description}")
 
     def init_screen(self):
         self.screen.clear()
         self.screen.refresh()
-        self.current_object_pad = curses.newpad(3, 50)
-        self.locations_pad = curses.newpad(50, 50)
-        self.story_pad = curses.newpad(50, 50)
-        self._refresh_current_object_pad()
-        self._refresh_locations_pad()
+
+        # Column 1
+        x = 0
+
+        self.current_object_pane = TextPane(
+            lambda: format(self.current_object, "1"),
+            (x,  0),  # Screen Position
+            (3, 50),  # Pad Size
+            (3, 50),  # Pad Viewport Size
+            border_args=[  # Arguments to pad.border()
+                curses.ACS_VLINE,  # left side
+                curses.ACS_VLINE,  # right side
+                curses.ACS_HLINE,  # top side
+                curses.ACS_HLINE,  # bottom side
+                curses.ACS_ULCORNER,  # top left
+                curses.ACS_URCORNER,  # top right
+                curses.ACS_LTEE,  # bottom left
+                curses.ACS_RTEE,  # bottom right
+            ],
+        )
+        x += self.current_object_pane.height
+
+        self.locations_pane = MenuPane(
+            self.locations,
+            (x-1, 0),                   # Screen Position
+            (len(self.objects), 50),  # Pad Size
+            (10, 50),                  # Pad Viewport Size
+            border_args=[  # Arguments to pad.border()
+                curses.ACS_VLINE,  # left side
+                curses.ACS_VLINE,  # right side
+                curses.ACS_HLINE,  # top side
+                curses.ACS_HLINE,  # bottom side
+                curses.ACS_LTEE,  # top left
+                curses.ACS_RTEE,  # top right
+                curses.ACS_LTEE,  # bottom left
+                curses.ACS_RTEE,  # bottom right
+            ],
+            renderer=lambda i, d: format(d, "0"),
+        )
+        x += self.locations_pane.height-1
+
+        self.status_pane = TextPane(
+            "World Builder",
+            (x-1,  0),  # Screen Position
+            (3, 50),  # Pad Size
+            (3, 50),  # Pad Viewport Size
+            border_args=[  # Arguments to pad.border()
+                curses.ACS_VLINE,  # left side
+                curses.ACS_VLINE,  # right side
+                curses.ACS_HLINE,  # top side
+                curses.ACS_HLINE,  # bottom side
+                curses.ACS_LTEE,  # top left
+                curses.ACS_RTEE,  # top right
+                curses.ACS_LLCORNER,  # bottom left
+                curses.ACS_LRCORNER,  # bottom right
+            ],
+        )
+        x += self.status_pane.height-1
+
+        # Column 2
+        height = x
+        x = 0
+        self.description_pane = TextPane(
+            lambda: textwrap.wrap(format(self.current_object.description), 46),
+            (x, 50),  # Screen Position
+            (height, 50),  # Pad Size
+            (height, 50),  # Pad Viewport Size
+        )
+        x += self.description_pane.height
+
+        # Row 2
+        x = height
+        self.story_pane = TextPane(
+            lambda: self.story_formatter(),
+            (height, 0),  # Screen Position
+            (4000, 100),  # Pad Size
+            (40, 100),  # Pad Viewport Size
+        )
+
+        self.current_object_pane()
+        self.description_pane()
+        self.status_pane()
+        self.description_pane()
+        self.story_pane()
+        self.locations_pane.set_data(self.locations)
+
+        self.current_object_pane.status_pane = self.status_pane
+        self.locations_pane.status_pane = self.status_pane
+        self.description_pane.status_pane = self.status_pane
+
+    def _story_formatter(self):
+        for passage in self.passages:
+            for line in format(passage).splitlines():
+                yield ""
+                wrapped_lines = textwrap.wrap(line, width=96)
+                for wrapped_line in wrapped_lines:
+                    yield wrapped_line
+
+    def story_formatter(self):
+        story_formatter = self._story_formatter()
+        try:
+            next(story_formatter)
+        except StopIteration:
+            return
+        for line in story_formatter:
+            yield line
 
     @property
     def current_object(self):
         return self._current_object
-    
+
     @current_object.setter
     def current_object(self, current_object):
         self._current_object = current_object
-        self._refresh_current_object_pad()
-        self.locations = list(filter(lambda o: isinstance(o, Location), self.current_object._child_locatables))
-
-    def _refresh_current_object_pad(self):
-        self.current_object_pad.clear()
-        self.current_object_pad.addstr(1, 2, f"{self.current_object:1}")
-        print("Refreshing current object pad")
-        self.current_object_pad.border()
-        self.current_object_pad.refresh(
-            0,  0,  # Pad Top Left
-            0,  0,  # Win Top Left
-           10, 50,  # Win Bottom Right
-        )
+        if self.screen:
+            self.current_object_pane()
+            self.description_pane()
+            self.story_pane()
+            self.locations_pane.set_data(self.locations)
 
     @property
     def locations(self):
-        return self._locations
+        return list(filter(lambda o: isinstance(o, Location), self.current_object._child_locatables))
 
-    @locations.setter
-    def locations(self, locations):
-        self._locations = locations
-        self._refresh_locations_pad()
-    
-    def _refresh_locations_pad(self):
-        self.locations_pad.clear()
-        for i, location in enumerate(self.locations):
-            self.locations_pad.addstr(i+1, 2, f"{i:>2}: {location:0}")
-        self.locations_pad.border()
-        self.locations_pad.refresh(
-             0,  0,  # Pad Top Left
-             3,  0,  # Win Top Left
-            10, 50,  # Win Bottom Right
-        )
-        self.screen.move(4, 3)
+    @property
+    def passages(self):
+        return list(filter(lambda o: isinstance(o, Passage) and o is not self._current_object.description, self.current_object._child_locatables))
 
     def main(self):
-        selected_index = 0
         while True:
-            self.screen.move(4, 3 + selected_index)
             key = self.screen.getkey()
             if key in {"q", "Q"}:
                 break
             elif key in {curses.KEY_UP, "w", "W"}:
-                selected_index = max(0, selected_index-1)
+                self.locations_pane.up()
             elif key in {curses.KEY_DOWN, "s", "S"}:
-                selected_index = min(len(self.current_object._child_locatables), selected_index+1)
+                self.locations_pane.down()
+            elif key in {"r", "R"}:
+                self.story_pane.up()
+            elif key in {"f", "F"}:
+                self.story_pane.down()
             elif key in {curses.KEY_LEFT, "a", "A"}:
                 if self.current_object.location:
                     self.current_object = self.current_object.location
             elif key in {curses.KEY_RIGHT, "d", "D"}:
-                if 0 <= selected_index < len(self.locations):
-                    self.current_object = self.locations[selected_index]
+                if 0 <= self.locations_pane.selected_index < len(self.locations):
+                    self.current_object = self.locations_pane.selected
 
-curses.wrapper(UI)
-# UI()
+
+if __name__ == "__main__":
+    curses.wrapper(
+        UI,
+        sys.argv[1],
+    )
+    # UI(None, "campaign.json")
