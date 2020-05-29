@@ -67,7 +67,7 @@ to keep busy, there are a couple places around that usually have jobs posted.
 {caravan_leader} (pointing left): If you head over to {town_hall} they usually have some postings about issues affecting
 the locals, weird happenings by the farms or rats in the sewer, that sort of thing.
 
-{caravan_leader} (pointing behind): There's a {militia_barracks} back the way we came, near where we entered town.  They're
+{caravan_leader} (pointing behind): There's a {militia_barracks:0} back the way we came, near where we entered town.  They're
 always looking for able bodies to help with bandits and criminals.
 
 {caravan_leader} (pointing ahead): Oh, and I almost forgot, the {market}! Sometimes wares go missing and the merchants there
@@ -85,9 +85,9 @@ they've usually got some odd jobs that need doing.
 
 Shifty Guy and a Hunter walk off to the right toward a shadier looking part of town.
 
-Two others in mail with swords and shields head back toward the {militia_barracks}
+Two others in mail with swords and shields head back toward the {militia_barracks:0}.
 
-{the_party} decides to head over to {town_hall} to see what they can find.
+{the_party} decides to head over to {town_hall:0} to see what they can find.
 
 """)
 arrival.the_party = the_party
@@ -119,9 +119,9 @@ manages to play it off as though he stumbled, raising the suspicious of both men
 Once {the_party} reaches {location:0}, they look over the job board, deciding between a rat infestation and mysterious
 disappearances in the woods. They choose to investigate the disappearances, hearing that a couple of farmers went missing
 and the three person militia squad that went out in search of them only had one member return. The remaining member is
-stable, recovering from wounds, at the {militia_barracks}.
+stable, recovering from wounds, at the {militia_barracks:0}.
 
-{the_party} heads over to the {militia_barracks} and learn that the surviving militiaman is named Frankie. After convincing
+{the_party} heads over to the {militia_barracks:0} and learn that the surviving militiaman is named Frankie. After convincing
 someone that {caltrop} is Frankie's friend, they head up to Frankie's room and ask him some questions. Frankie
 was clearly scratched and bitten by something and he still seems shocked or horrified by whatever he saw. He tells {the_party}
 that he found "it" in the forest west of town, just to the north of the giant birch on the right.
