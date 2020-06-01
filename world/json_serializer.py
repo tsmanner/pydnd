@@ -1,12 +1,13 @@
+import collections
 import re
-from typing import List
+from typing import List, Set
 import world
 
 
 def to_json(*objs):
     objects = {}
     [add_json_to_dict(obj, objects) for obj in objs]
-    return objects
+    return collections.OrderedDict({k: objects[k] for k in sorted(objects)})
 
 
 def _to_json(obj, objects: dict):

@@ -212,7 +212,7 @@ class UI:
             for o in self.objects.values():
                 print(o)
                 if o.description is not None:
-                    print(f"    {o.description}")
+                    print(f"    {recursive_format(o.description, o)}")
 
     def init_screen(self):
         self.screen.clear()
@@ -280,7 +280,7 @@ class UI:
         height = x
         x = 0
         self.description_pane = TextPane(
-            lambda: textwrap.wrap(format(self.current_object.description), 46),
+            lambda: textwrap.wrap(recursive_format(self.current_object.description, self.current_object), 46),
             (x, 50),  # Screen Position
             (height, 50),  # Pad Size
             (height, 50),  # Pad Viewport Size
@@ -343,7 +343,7 @@ class UI:
 
     @property
     def passages(self):
-        return list(filter(lambda o: isinstance(o, Passage) and o is not self._current_object.description, self.current_object._child_locatables))
+        return list(filter(lambda o: isinstance(o, Passage), self.current_object._child_locatables))
 
     def main(self):
         while True:

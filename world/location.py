@@ -7,6 +7,20 @@ from typing import Iterable, List, Optional, Set, Union
 from world.world_object import WorldObject
 
 
+def recursive_format(s, o):
+    if s and o:
+        body = linesep.join([line.replace(linesep, ' ') for line in s.split(f"{linesep}{linesep}")])
+        return body.format(**
+            {
+                key: getattr(o, key) for key in map(
+                    lambda t: t[1].split(".")[0],
+                    filter(lambda t: t[1], Formatter().parse(body))
+                )
+            }
+        )
+    return "<No Description>"
+
+
 class Locatable(WorldObject):
     def __init__(self, *, object_id: int = None, location: "Location" = None, description: Optional[Union[str, "Passage"]] = None, **kwargs):
         super().__init__(object_id, **kwargs)
@@ -46,6 +60,12 @@ class NamedLocatable(Locatable):
     def __format__(self, format_spec=''):
         return self.name
 
+    def __str__(self):
+        return format(self)
+
+    def __repr__(self):
+        return f"<{type(self).__name__}({self.object_id}): {self.name}>"
+
 
 class Location(NamedLocatable):
     def __format__(self, format_spec = ''):
@@ -81,38 +101,44 @@ class Location(NamedLocatable):
     def __str__(self):
         return format(self, "1")
 
-    def __repr__(self):
-        return format(self)
-
 
 class Passage(NamedLocatable):
-    def __init__(self, *, body: str = "", prev: "Passage" = None, **kwargs):
+    latest_passage = None
+
+    def __init__(self, *, body: str = "", previous_passage: "Passage" = None, **kwargs):
         super().__init__(**kwargs)
+        self._previous_passage = None
+        self._next_passage = None
+        self.previous_passage = previous_passage if previous_passage else Passage.latest_passage
         self.body = body.strip()
-        self._prev = None
-        self.prev = prev
-        self.next = None
-        self.references = {}
+        Passage.latest_passage = self
+
+    def __setattr__(self, name, value):
+        if not hasattr(self, "references"):
+            super().__setattr__("references", [])
+        if isinstance(value, WorldObject) and value not in self.references:
+            self.references.append(value)
+        super().__setattr__(name, value)
 
     @property
-    def prev(self):
-        return self._prev
+    def previous_passage(self):
+        return self._previous_passage
 
-    @prev.setter
-    def prev(self, prev):
-        self._prev = prev
-        if self._prev and self._prev.next:
-            self.next = self._prev.next
-            self.next._prev = self
-        if self._prev:
-            self._prev.next = self
+    @previous_passage.setter
+    def previous_passage(self, previous_passage):
+        # If this Passage already has a previous Passage, put the new one
+        # in between that Passage and self.
+        # 1. Set the new previous Passage's previous reference to our old one
+        # 2. Set the new previous Passage's next reference to self
+        # 3. Set self's previous reference to the new previous Passage
+        if previous_passage:
+            if self._previous_passage:
+                previous_passage.previous_passage = self.previous_passage
+            previous_passage._next_passage = self
+        self._previous_passage = previous_passage
 
     def _format(self, s):
-        body = linesep.join([line.replace(linesep, ' ') for line in s.split(f"{linesep}{linesep}")])
-        kvs = {key[1]: getattr(self, key[1]) for key in filter(lambda t: t[1] is not None, Formatter().parse(body))}
-        return body.format(
-            **kvs
-        )
+        return recursive_format(self.body, self)
 
     def __format__(self, *_, **__):
         return self._format(self.body)

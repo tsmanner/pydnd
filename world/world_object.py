@@ -13,11 +13,12 @@ def _generate_id():
 class WorldObject:
     def __init__(self, object_id: int = None):
         super().__init__()
-        super().__setattr__("_attrs", set())
         self.object_id = object_id if object_id is not None else next(WorldObject.ObjectID)
 
     def __setattr__(self, name, value):
         # Don't capture properties (class level)
+        if not hasattr(self, "_attrs"):
+            super().__setattr__("_attrs",  set())
         if name not in dir(type(self)):
             self._attrs.add(name)
         super().__setattr__(name, value)
