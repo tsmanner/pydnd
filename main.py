@@ -1,4 +1,3 @@
-import contextlib
 import curses
 import enum
 import json
@@ -6,90 +5,8 @@ import types
 import sys
 import textwrap
 from world import *
+from world.tui.pane import Pane
 
-
-class PartialProxy:
-    def __init__(self, proxied_object):
-        super().__init__()
-        super().__setattr__("_proxy_started", False)
-        super().__setattr__("proxied_object", proxied_object)
-
-    @contextlib.contextmanager
-    def pause_proxy(self):
-        self.proxy_stop()
-        try:
-            yield None
-        finally:
-            self.proxy_start()
-
-    def proxy_start(self):
-        self._proxy_started = True
-
-    def proxy_stop(self):
-        self._proxy_started = False
-
-    def _hasattribute(self, name):
-        try:
-            self.__getattribute__(name)
-        except AttributeError:
-            return False
-        return True
-
-    def __setattr__(self, name, value):
-        # Pass through all things not explicitely defined
-        if self._hasattribute(name) or not self._proxy_started:
-            super().__setattr__(name, value)
-        else:
-            setattr(self.proxied_object, name, value)
-
-    def __getattr__(self, name):
-        # Pass through all things not explicitely defined
-        return getattr(self.proxied_object, name)
-
-    def __getitem__(self, *args, **kwargs):
-        return self.proxied_object.__getitem__(*args, **kwargs)
-
-    def __setitem__(self, *args, **kwargs):
-        return self.proxied_object.__setitem__(*args, **kwargs)
-
-    def __repr__(self):
-        return f"Proxy<{str(self.proxied_object)}>"
-
-
-class Pane(PartialProxy):
-    def __init__(self, screen_position, pad_size, pad_viewport_size=None, pad_viewport_top_left=(0, 0), border_args=(), status_pane=None):
-        super().__init__(curses.newpad(*pad_size))
-        with self.pause_proxy():
-            self.screen_position = (screen_position[0]+1, screen_position[1]+1)
-            self._border_win = curses.newwin(*pad_viewport_size, *screen_position)
-            self.pad_size = (pad_size[0]-2, pad_size[1]-2)
-            self.pad_viewport_size = pad_viewport_size if pad_viewport_size is not None else self.pad_size
-            self.pad_viewport_top_left = pad_viewport_top_left
-            self.border_args = border_args
-            self.status_pane = status_pane
-
-    @property
-    def height(self):
-        return self.pad_viewport_size[0]
-
-    def border(self):
-        self._border_win.border(*self.border_args)
-        self._border_win.refresh()
-
-    @property
-    def bottom_right(self):
-        return (
-            self.screen_position[0] + self.pad_viewport_size[0] - 3,
-            self.screen_position[1] + self.pad_viewport_size[1] - 3,
-        )
-
-    def refresh(self):
-        self.border()
-        self.proxied_object.refresh(
-            *self.pad_viewport_top_left,  # Pane coordinate of viewport top left
-            *self.screen_position,        # Screen coordinate to place Pane top left
-            *self.bottom_right,           # Screen coordinate to place Pane bottom right
-        )
 
 
 class ScrollDirection(enum.Enum):
@@ -158,22 +75,25 @@ class MenuPane(ScrollablePane):
         super().refresh()
 
     def up(self):
-        self._update_selected_index(ScrollDirection.UP)
+        message = f"{self._selected_index} -> "
+        if self._selected_index > 0:
+            self._selected_index -= 1
+        message += f"{self._selected_index}: {self.pad_viewport_top_left} -> "
+        if self._selected_index != 0 and self._selected_index == (self.pad_viewport_top_left[0]):
+            self.pad_viewport_top_left = (self.pad_viewport_top_left[0] - 1, 0)
+        message += f"{self.pad_viewport_top_left}"
+        self.status_pane(message)
+        self.refresh()
 
     def down(self):
-        self._update_selected_index(ScrollDirection.DOWN)
-
-    def _update_selected_index(self, direction: ScrollDirection):
-        if direction is ScrollDirection.UP:
-            if self._selected_index > 0:
-                self._selected_index -= 1
-            if self._selected_index != 0 and self._selected_index == (self.pad_viewport_top_left[0]):
-                self.pad_viewport_top_left = (self.pad_viewport_top_left[0] - 1, 0)
-        elif direction is ScrollDirection.DOWN:
-            if self._selected_index < (len(self.data) - 1):
-                self._selected_index += 1
-            if self._selected_index != len(self.data) - 1 and self._selected_index == (self.pad_viewport_top_left[0] - 1 + self.height):
-                self.pad_viewport_top_left = (self.pad_viewport_top_left[0] + 1, 0)
+        message = f"{self._selected_index} -> "
+        if self._selected_index < (len(self.data) - 1):
+            self._selected_index += 1
+        message += f"{self._selected_index}: {self.pad_viewport_top_left} -> "
+        if self._selected_index != len(self.data) - 1 and self._selected_index == (self.pad_viewport_top_left[0] - 1 + self.height):
+            self.pad_viewport_top_left = (self.pad_viewport_top_left[0] + 1, 0)
+        message += f"{self.pad_viewport_top_left}"
+        self.status_pane(message)
         self.refresh()
 
     @property

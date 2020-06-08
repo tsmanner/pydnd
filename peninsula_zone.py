@@ -39,6 +39,14 @@ city.militia_barracks.description = "The local militia's barracks"
 city.market = Location(name="Market", location=city)
 city.market.description = "The local marketplace. Doubles as an open air trading space, and a caravan park, where traveling caravaneers stay for days to weeks at a time."
 
+Location(name="a", location=city)
+Location(name="b", location=city)
+Location(name="c", location=city)
+Location(name="d", location=city)
+Location(name="e", location=city)
+Location(name="f", location=city)
+Location(name="g", location=city)
+
 
 # The Go'Val race
 go_val = NamedLocatable(name="Go'Val")
@@ -132,3 +140,32 @@ with open(OUTPUT_FILE, "w") as fl:
         },
         fl
     )
+
+
+"""
+Head to the market, leaving Kilvin behind to keep an eye out
+
+Approach a teen playing in the market and ask about Frankie.
+"Who's that?"
+Party starts to babble about stuff
+"Hold on one sec kid"
+"Uh, ok"
+Kid returns to kicking around a ball and running around with his friends
+Ask about the birch tree, kid saw some on the way to town.
+Ask about local kids, he doesn't really know much, except they come down sometimes with their parents
+
+Go to more permanent looking booth occupied by a local farmer
+
+Maximus flies back to get Kilvin and they meet up with the others by the western road out of town
+
+Fight the zombies
+
+Return to town with their heads as proof.  While 
+
+Ryan robs some people of their iron silverware
+
+Spend the night with the caravan
+
+Head to town hall in the morning to get payment for the zombies.  Suspicious of the clerk for hiding the ledger sheet, they ask about it.  Was 3gp originally, increased to 5 + 1 per monster after the militia patrol failed.
+
+"""
