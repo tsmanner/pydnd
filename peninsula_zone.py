@@ -3,7 +3,7 @@ import os
 from world import NamedLocatable, Location, Passage, to_json
 
 
-OUTPUT_FILE = "peninsula_zone.json"
+OUTPUT_FILE = "peninsula_zone.dnd.json"
 
 # Setting up the party
 the_party = NamedLocatable(name="The Party")
@@ -122,8 +122,8 @@ disturbing_disappearances_taken.city = city
 
 
 disturbing_disappearances_investigation = Passage(
-    name="Disturbing Disappearances Investigation", 
-    location=city.militia_barracks, 
+    name="Disturbing Disappearances Investigation",
+    location=city.militia_barracks,
     body="""
 {the_party} heads over to the {city.militia_barracks:0} and learn that the surviving militiaman is named Frankie. After convincing someone that {the_party.caltrop} is Frankie's friend, they head up to Frankie's room and ask him some questions. Frankie was clearly scratched and bitten by something and he still seems shocked or horrified by whatever he saw. He tells {the_party} that he found "it" in the forest west of town, just to the north of the giant birch on the right.
 """)
@@ -160,7 +160,7 @@ Maximus flies back to get Kilvin and they meet up with the others by the western
 
 Fight the zombies
 
-Return to town with their heads as proof.  While 
+Return to town with their heads as proof.  While
 
 Ryan robs some people of their iron silverware
 
