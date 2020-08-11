@@ -43,3 +43,6 @@ __pycache__/
 *.pyc
 .tox/
 .venv/
+
+# Campaign json files
+*.dnd.json
